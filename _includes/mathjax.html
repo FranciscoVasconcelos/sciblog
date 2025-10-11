@@ -1,0 +1,19 @@
+ <!-- MathJax Setup -->
+  <script>
+    window.myMathLabels = {};
+    window.MathJax = {
+      loader: {load:['[tex]/color','[tex]/physics','[tex]/boldsymbol']},
+      tex: { 
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        tags: 'all',
+        packages: {'[+]':['color','physics','boldsymbol']}
+      },
+      svg: { fontCache: 'global',scale: 1 },
+      chtml: {scale: 1},
+      options:{
+        skipHtmlTags: {'[-]': ['code', 'pre']}
+      }
+    };
+  </script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
