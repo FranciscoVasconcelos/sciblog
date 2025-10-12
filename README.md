@@ -15,3 +15,10 @@ Automatic styling and javascript for hidden boxes:
 
 
 In the future I will want to implement easy ways to write code and add it to each post.
+
+
+
+### IMPORTANT 
+
+As of now (11/10/2025) the Brave browser cannot render mathjax...
+I am using firefox and chromium (which work fine)

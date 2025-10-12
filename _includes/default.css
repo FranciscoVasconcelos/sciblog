@@ -1,0 +1,48 @@
+
+  pretty-box {
+    display: block;
+    margin: 10px 0;
+  }
+  pretty-box .box {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    position: relative;
+  }
+  pretty-box .header {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #333;
+  }
+  pretty-box .content {
+    margin-top: 10px;
+  }
+  pretty-box .hide-button {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  pretty-box .hide-button:hover {
+    background-color: #0056b3;
+    color: #cccccc;
+  }
+  pretty-box .hide-button::before{
+    content: "Hide";
+  }
+  pretty-box a{
+    color: green;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  pretty-box a:hover{
+    color: darkgreen;
+  }
+

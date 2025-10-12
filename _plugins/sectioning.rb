@@ -10,29 +10,32 @@ module Jekyll
 
     def render(context)
 
+      context["section"] ||= {}
       # Create counter for each section level
-      context["section_counter"] ||= Array.new
+      context["section"]["counter"] ||= Array.new
       
       # Initialize counter if empty
-      context["section_counter"][@level] ||= 0
+      context["section"]["counter"][@level] ||= 0
       
       # increment counter
-      context["section_counter"][@level] += 1
-
-      # Reset equation counter when at level 0
-      if @level == 0
-        context["equation_counter"] = 1
+      context["section"]["counter"][@level] += 1
+      
+      # Iterate over envs
+      context["envs"].each do |env|
+        # Reset env counter when at specified level
+        if @level == context[env]["countby"]
+          context[env]["counter"] = 1
+        end
       end
-
 
       number_str = " "
 
-      context["section_counter"].each_with_index do |element,index|
+      context["section"]["counter"].each_with_index do |element,index|
         break if index > @level
         if element == nil
-          context["section_counter"][index] = 0
+          context["section"]["counter"][index] = 0
         end
-        number_str += context["section_counter"][index].to_s + "." 
+        number_str += context["section"]["counter"][index].to_s + "." 
       end
     
       return "\#"*(@level +1) + number_str + " #{@header}"

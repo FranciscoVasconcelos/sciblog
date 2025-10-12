@@ -27,7 +27,7 @@ module Jekyll
 
       # page["data"] ||= {}
       site.config["eqlabel"] ||= {}
-      site.config["eqlabel"]["math-eqref-#{@label}"] = eqlabel
+      site.config["eqlabel"]["math-ref-#{@label}"] = eqlabel
       
       # page['data'] = "teststes"
       # puts page['data']
