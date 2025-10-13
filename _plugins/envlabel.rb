@@ -6,8 +6,7 @@ module Jekyll
       args = markup.strip.split(/\s+/)
       @envname = args[0]
       @label = args[1]
-      @proof = args[2] || "false"
-      @proof = @proof.downcase == "true"
+      @proof = args[2].downcase== "true"
     end
     def render(context)
       page = context.registers[:page]
@@ -29,6 +28,7 @@ module Jekyll
 
       context[@envname]["counter"] ||= 1
       envcounter = context[@envname]["counter"]
+      
 
       anchor = "math-ref-#{@label}"
       id = "#{@envname}#{number_str.gsub('.','_')}" # Define a unique id
@@ -40,13 +40,13 @@ module Jekyll
       # Store ref in the global config
       site.config["ref"] ||= {}
       site.config["ref"][anchor] = ref
-  
+ 
       linkproof = ""
-      if @proof
-        proofurl = equrl + ":proof"
-        linkproof =
+      if @proof 
+        proofname = context[@envname]['proofname']
+        linkproof = 
         <<~HTML
-        See proof <a href="#{proofurl}">here</a>.
+        See #{proofname} <a href="#{equrl}:proof">here</a>.
         HTML
       end
 
