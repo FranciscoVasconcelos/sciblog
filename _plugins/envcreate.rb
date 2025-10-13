@@ -6,13 +6,15 @@ module Jekyll
       args = markup.strip.split(/\s+/)
       @envname = args[0]
       @countby = args[1]
+      @proofname = args[2]
          
       # @label = args[0]
     end
     def render(context)
       envdict = {}
       envdict["countby"] = @countby.to_i
-      
+      envdict["proofname"] = @proofname == nil ? 'proof' : @proofname
+
       # Add the enviornment name to the context
       context[@envname] = envdict
 

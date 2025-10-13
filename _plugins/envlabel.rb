@@ -6,6 +6,7 @@ module Jekyll
       args = markup.strip.split(/\s+/)
       @envname = args[0]
       @label = args[1]
+      @proof = args[2] == "true"
     end
     def render(context)
       page = context.registers[:page]
@@ -27,6 +28,7 @@ module Jekyll
 
       context[@envname]["counter"] ||= 1
       envcounter = context[@envname]["counter"]
+      
 
       anchor = "math-ref-#{@label}"
       id = "#{@envname}#{number_str.gsub('.','_')}" # Define a unique id
@@ -39,6 +41,16 @@ module Jekyll
       site.config["ref"] ||= {}
       site.config["ref"][anchor] = ref
  
+      seeproof = ""
+
+      if @proof 
+        proofname = context[@envname]['proofname']
+        seeproof = 
+        <<~HTML
+        See #{proofname} <a href="#{equrl}:proof">here</a>.
+        HTML
+      end
+
       # Iterate config 
       context[@envname]["counter"] += 1
       content = super
@@ -54,6 +66,7 @@ module Jekyll
         <div class="content">
             #{content}
         </div>
+        #{seeproof}
         </div>
       </div>
 

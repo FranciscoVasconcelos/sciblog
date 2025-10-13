@@ -12,7 +12,7 @@ acronym: P
 
 
 <!-- Create theorem env labeled by section -->
-{% envcreate theorem 0 %}
+{% envcreate theorem 0 solution %}
 
 <!-- Create definition env labeled by subsection -->
 {% envcreate definition 1 %}
@@ -24,7 +24,7 @@ acronym: P
 {% section TEST 0 %}
 
 <!-- Create a theorem  -->
-{% envlabel theorem theo:this:theorem %}
+{% envlabel theorem theo:this:theorem true %}
 This is a theorem for einstein
 $$
 e=mc^2
@@ -57,9 +57,14 @@ $$
 {% ref def:this:coco %}
 
 
+{% envproof theorem theo:this:theorem %}
+This is a crappy proof of the theorem. Use $\eqref{the:coco:eq}$ to show that 
 
+$$
+A = \sqrt{\sum_i\sum_j f_i(a_i,\beta_j)}
+$$
+{% endenvproof %}
 
-$\eqref{the:coco:eq}$
 
 
 
