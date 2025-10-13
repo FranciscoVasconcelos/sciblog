@@ -10,8 +10,27 @@ acronym: P
 {% include box.js %}
 </script>
 
+<!-- Define some style to see highlights when clicking links -->
+
+<style>
+  div:target {
+    animation: flash 0.1s;
+  }
+
+@keyframes flash {
+  0%,100% {
+    background-color: transparent;
+    border: 1px solid transparent;
+  }
+  10% {
+    background-color: #ffeb3b;
+    border: 4px solid red;
+  }
+}
+</style>
 
 
+{% envoptions equation 2 %}
 
 <!-- Create theorem env labeled by section -->
 {% envcreate theorem 0 solution %}
@@ -22,27 +41,42 @@ acronym: P
 
 {% include mathjax.html %}
 
+
+
+This → {% ref some-label %} is a link to a section 
+
+
+
 {% section TEST 0 %}
 
+{% section firstsubsection 1 first-label %}
 <!-- Create a theorem  -->
 {% envlabel theorem theo:this:theorem true %}
 This is a theorem for einstein
 $$
 e=mc^2
 $$
+
+some other equation with a new tag 
+
+{% equation eq:pi:3 %}
+\pi = \sum_k \pi_k^{\theta_k}
+{% endequation %}
+
 {% endenvlabel %}
 
 
 
-$$
-\pi = 3
-$$
 
 
-{% section subsection 1 %}
+
+{% section subsection 1 ugly-section %}
 
 <!-- Create a definition  -->
 {% envlabel definition def:this:coco true %}
+
+This is a definition labeled by subsection
+
 We define the coco
 
 $$
@@ -61,10 +95,24 @@ $$
 {% envproof theorem theo:this:theorem %}
 This is a crappy proof of the theorem. Use $\eqref{the:coco:eq}$ to show that 
 
-$$
+{% equation %}
 A = \sqrt{\sum_i\sum_j f_i(a_i,\beta_j)}
-$$
+{% endequation %}
+
+some text here. 
+{% equation %}
+\pi = \sum_k \pi_k^{\theta_k}
+{% endequation %}
+And if I add <a href="www.fuck.com">this</a>
+
+
 {% endenvproof %}
+
+
+{% section othersubsection 1 some-label %}
+{% section other-other-subsection 2 some-other-label %}
+
+{% ref eq:pi:3 %}
 
 
 

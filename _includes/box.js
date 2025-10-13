@@ -62,6 +62,9 @@ class HashNavigation {
             const targetElement = this.getElementFromHash(hash);
             if (targetElement) {
                 this.navigateToElement(targetElement);
+                // Reset animation
+                targetElement.style.animation = 'none';
+                setTimeout(() => {targetElement.style.animation = 'flash 2.5s';}, 10);
             }
         }
     }    
