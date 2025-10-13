@@ -11,12 +11,13 @@ acronym: P
 </script>
 
 
+
+
 <!-- Create theorem env labeled by section -->
 {% envcreate theorem 0 %}
 
 <!-- Create definition env labeled by subsection -->
 {% envcreate definition 1 %}
-
 
 
 {% include mathjax.html %}
@@ -41,7 +42,7 @@ $$
 {% section subsection 1 %}
 
 <!-- Create a definition  -->
-{% envlabel definition def:this:coco %}
+{% envlabel definition def:this:coco true %}
 We define the coco
 
 $$

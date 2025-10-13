@@ -6,6 +6,8 @@ module Jekyll
       args = markup.strip.split(/\s+/)
       @envname = args[0]
       @label = args[1]
+      @proof = args[2] || "false"
+      @proof = @proof.downcase == "true"
     end
     def render(context)
       page = context.registers[:page]
@@ -38,22 +40,32 @@ module Jekyll
       # Store ref in the global config
       site.config["ref"] ||= {}
       site.config["ref"][anchor] = ref
- 
+  
+      linkproof = ""
+      if @proof
+        proofurl = equrl + ":proof"
+        linkproof =
+        <<~HTML
+        See proof <a href="#{proofurl}">here</a>.
+        HTML
+      end
+
       # Iterate config 
       context[@envname]["counter"] += 1
       content = super
            
       # The content with a toggle button inside
       <<~HTML
-      <div class="#{@envname}-box" id="#{anchor}">
+      <div class="#{@envname}-box user-#{@envname}-box" id="#{anchor}">
       <div class='box'>
-        <div class="header">
+        <div class="header user-header">
             #{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a>
         </div>
-        <button class="hide-button" onclick="toggleContent#{id}()"></button>
-        <div class="content">
+        <button class="hide-button user-hide-button" onclick="toggleContent#{id}()"></button>
+        <div class="content user-content">
             #{content}
         </div>
+        #{linkproof}
         </div>
       </div>
 
