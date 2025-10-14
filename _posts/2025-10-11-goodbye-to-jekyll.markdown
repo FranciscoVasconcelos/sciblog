@@ -47,9 +47,9 @@ This → {% ref some-label %} is a link to a section
 
 
 
-{% section TEST 0 %}
+{% section TEST level=0 %}
 
-{% section firstsubsection 1 first-label %}
+{% section firstsubsection level=1 label=first-label %}
 <!-- Create a theorem  -->
 {% envlabel theorem theo:this:theorem true %}
 This is a theorem for einstein
@@ -70,7 +70,7 @@ some other equation with a new tag
 
 
 
-{% section subsection 1 ugly-section %}
+{% section subsection level=1 label=ugly-section %}
 
 <!-- Create a definition  -->
 {% envlabel definition def:this:coco true %}
@@ -109,8 +109,8 @@ And if I add <a href="www.fuck.com">this</a>
 {% endenvproof %}
 
 
-{% section othersubsection 1 some-label %}
-{% section other-other-subsection 2 some-other-label %}
+{% section othersubsection level=1 label=some-label %}
+{% section other-other-subsection level=2 label=some-other-label %}
 
 {% ref eq:pi:3 %}
 

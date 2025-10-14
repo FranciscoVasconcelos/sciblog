@@ -1,3 +1,53 @@
+require 'shellwords'
+
+
+# Parses tag arguments into positional and named parameters.
+def parse_params(text)
+  args = Shellwords.split(text.strip)
+  positional = []
+  named = {}
+  
+  args.each do |arg|
+    if arg.include?('=')
+      key, value = arg.split('=', 2)
+      named[key] = value
+    else
+      positional << arg
+    end
+  end
+  [positional, named]
+end
+
+# Validates that parameters follow Python's convention where all positional
+# arguments must come before any named arguments.
+def valid_param_order?(text)
+  positional = Shellwords.split(text.strip)
+  seen_named = false
+  
+  positional.each do |arg|
+    if arg.include?('=')
+      seen_named = true
+    elsif seen_named
+      # Found a positional argument after a named one
+      return false
+    end
+  end
+  
+  return true
+end
+
+# Counts the number of consecutive "sub" prefixes before "section".
+def count_sub_prefixes(str)
+  # Use regex to match: zero or more "sub", followed by "section" at the end
+  return nil unless str != nil
+  match = str.match(/^((?:sub)*)section$/)
+  return nil unless match
+  
+  # Count how many times "sub" appears in the captured group
+  match[1].scan(/sub/).length
+end
+
+
 def gen_and_save_ref(context,level,envcounter,anchor)
   # Create a label and an url and save it in the context
   
@@ -95,11 +145,19 @@ module Jekyll
   class EnvLabel < Liquid::Block
     def initialize(tag_name, markup, tokens)
       super
-      # markup contains everything after the tag name
-      args = markup.strip.split(/\s+/)
-      @envname = args[0]
-      @label = args[1]
-      @proof = args[2].downcase == "true"
+    
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+
+      positional, named = parse_params(markup)
+
+      @envname = named['envname'] || positional[0]
+      @label = named['label'] || positional[1]
+      @proof = (named['showproof'] || positional[2]).downcase == 'true' 
+
     end
     def render(context)
       page = context.registers[:page]
@@ -166,13 +224,23 @@ end
 
 module Jekyll
   class Sectioning < Liquid::Tag
-    def initialize(tag_name,text,tokens)
+    def initialize(tag_name,markup,tokens)
       super
+   
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+      
+      @header = named['header'] || positional[0]
+      type = named['by'] || positional[1]
+      @level = (count_sub_prefixes(type) || named['level'] || 0).to_i
+      @ref = named['label'] || positional[2] || ""
+      
+      # Give error if @header is nil or empty
 
-      args = text.split(' ')
-      @header = args[0] || ""
-      @level = args[1].to_i || 0
-      @ref = args[2] || ""
     end
 
     def render(context)
@@ -210,9 +278,16 @@ module Jekyll
   class Reference < Liquid::Tag
     def initialize(tag_name,markup,tokens)
       super
+        
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
 
-      args = markup.strip.split(/\s+/)
-      @label = args[0]
+      positional, named = parse_params(markup)
+      @label = positional[0] || named["label"]
+
+      # Must give error if @label is nil
     end
 
     def render(context)
@@ -229,10 +304,18 @@ module Jekyll
   class EnvProof < Liquid::Block
     def initialize(tag_name, markup, tokens)
       super
-      # markup contains everything after the tag name
-      args = markup.strip.split(/\s+/)
-      @envname = args[0]
-      @label = args[1]
+
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+
+      @envname = named['envname'] || positional[0]
+      @label = named['label'] || positional[1]
+      
+      # Give error if @label or @envname are nil or empty 
     end
     def render(context)
       page = context.registers[:page]
@@ -285,12 +368,19 @@ module Jekyll
   class EnvCreate < Liquid::Tag
     def initialize(tag_name, markup, tokens)
       super
-      # markup contains everything after the tag name
-      args = markup.strip.split(/\s+/)
-      @envname = args[0]
-      @countby = args[1] || 0
-      @proofname = args[2] || 'proof'
-         
+
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+
+      @envname = named['envname'] || positional[0]
+      @label = named['label'] || positional[1]
+      @countby = named['countby'] || positional[2] || 0
+      @proofname = named['proofname'] || positional[3] || 'proof'         
+      # Give error if @label or @envname are nil or empty 
     end
 
     def render(context)
@@ -320,14 +410,20 @@ module Jekyll
   class EquationLabel < Liquid::Block
     def initialize(tag_name, markup, tokens)
       super
-      # markup contains everything after the tag name
-      args = markup.strip.split(/\s+/)
-      @label = args[0]
-      # @envname = "equation"
+      
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+
+      @label = named['label'] || positional[0]
+      # Give error if @label is nil or empty 
     end
     def render(context)
       
-      # Count equations by section
+      # Count equations by section by default
       context["equation"] ||= {}
       context["equation"]["countby"] ||= 0
       
@@ -357,10 +453,18 @@ module Jekyll
   class EnvOptions < Liquid::Tag
     def initialize(tag_name, markup, tokens)
       super
-      # markup contains everything after the tag name
-      args = markup.strip.split(/\s+/)
-      @envname = args[0]
-      @countby = args[1]
+
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+
+      @envname = named['envname'] || positional[0]
+      @countby = named['countby'] || positional[1] || 0
+      # Give error if @envname is nil or empty 
+
     end
 
     def render(context)
