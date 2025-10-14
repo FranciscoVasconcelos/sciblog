@@ -4,42 +4,21 @@ title:  "Welcome to Jekyll!"
 date:   2025-10-11 11:16:18 +0100
 categories: jekyll update
 acronym: P
+section_with_acronym: true
 ---
 
-<script>
-{% include box.js %}
-</script>
-
-<!-- Define some style to see highlights when clicking links -->
-
-<style>
-  div:target {
-    animation: flash 0.1s;
-  }
-
-@keyframes flash {
-  0%,100% {
-    background-color: transparent;
-    border: 1px solid transparent;
-  }
-  10% {
-    background-color: #ffeb3b;
-    border: 4px solid red;
-  }
-}
-</style>
 
 
 {% envoptions equation 2 %}
 
-<!-- Create theorem env labeled by section -->
+<!-- Create theorem env labeled by section 
+This add the css files -->
 {% envcreate theorem 0 solution %}
 
 <!-- Create definition env labeled by subsection -->
 {% envcreate definition 1 %}
 
 
-{% include mathjax.html %}
 
 
 
@@ -47,7 +26,7 @@ This → {% ref some-label %} is a link to a section
 
 
 
-{% section TEST level=0 %}
+{% section "A section with spaces" level=0 %}
 
 {% section firstsubsection level=1 label=first-label %}
 <!-- Create a theorem  -->
@@ -66,7 +45,7 @@ some other equation with a new tag
 {% endenvlabel %}
 
 
-
+# **bold header**
 
 
 
@@ -115,6 +94,6 @@ And if I add <a href="www.fuck.com">this</a>
 {% ref eq:pi:3 %}
 
 
-
+{% ref sec:here %}
 
 

@@ -1,5 +1,22 @@
 require 'shellwords'
 
+def unique_acronym(strings)
+  unique_strings = []
+  strings.each do |s|
+    candidate = s.dup
+    while unique_strings.include?(candidate)
+      # change last letter cyclically
+      if candidate[-1].match?(/[A-Z]/)
+        candidate[-1] = ((candidate[-1].ord - 'A'.ord + 1) % 26 + 'A'.ord).chr
+      else
+        # if last char is not a letter, replace it with 'a'
+        candidate[-1] = 'A'
+      end
+    end
+    unique_strings << candidate
+  end
+  return unique_strings
+end
 
 # Parses tag arguments into positional and named parameters.
 def parse_params(text)
@@ -55,7 +72,7 @@ def gen_and_save_ref(context,level,envcounter,anchor)
   site = context.registers[:site]
 
   url  = page['url']
-  acronym = page['acronym']    
+  acronym = page['acronym']
   
   number_str = get_number_from_context(context,level)
   label_str = acronym + "-" + number_str + (envcounter == -1 ? "" : envcounter.to_s)
@@ -244,8 +261,13 @@ module Jekyll
     end
 
     def render(context)
+      
+      page = context.registers[:page]
 
       context["section"] ||= {}
+
+      context["section"]["withacronym"] ||= page["section_with_acronym"] || false
+      
       # Create counter for each section level
       context["section"]["counter"] ||= Array.new
       
@@ -256,19 +278,27 @@ module Jekyll
       context["section"]["counter"][@level] += 1
       
       # Iterate over envs
-      context["envs"].each do |env|
-        # Reset env counter when at specified level
-        if @level == context[env]["countby"]
-          context[env]["counter"] = 1
+      if context["envs"] != nil 
+        context["envs"].each do |env|
+          # Reset env counter when at specified level
+          if @level == context[env]["countby"]
+            context[env]["counter"] = 1
+          end
         end
       end
       
       number_str,_ = gen_and_save_ref(context,@level,-1,"math-ref-#{@ref}")
+      
+      acronym = ""
+      if context["section"]["withacronym"]
+        acronym = "#{page["acronym"]}-"
+      end
+
 
       if @ref != ""
         @ref = "{\#math-ref-#{@ref}}"
       end
-      return "\#"*(@level+1) + " " + number_str + " #{@header}" + " " + @ref
+      return "\#"*(@level+1) + " **#{acronym}#{number_str}** #{@header} #{@ref}"
 
     end
   end
@@ -291,7 +321,7 @@ module Jekyll
     end
 
     def render(context)
-      
+     
       <<~HTML
       <mathlabel>math-ref-#{@label}</mathlabel>
       HTML
@@ -321,7 +351,7 @@ module Jekyll
       page = context.registers[:page]
       site = context.registers[:site]
 
-      url  = page['url']
+      url = page['url']
       acronym = page['acronym']
     
       anchor = "math-ref-#{@label}"
@@ -397,7 +427,7 @@ module Jekyll
       
       # Add the default style 
       content = "<style>"
-      content += load_replace('_includes/default.css',".#{@envname}-box")
+      content += load_replace('_plugins/extra/default.css',".#{@envname}-box")
       content += "</style>"
 
       return content
@@ -434,6 +464,9 @@ module Jekyll
       equrl,label_str = get_url_label_from_config(context,anchor)
 
       label_str_p = "(#{label_str})"
+
+      puts label_str_p
+
 
       context["equation"]["counter"] += 1
       content = super
@@ -486,7 +519,28 @@ Liquid::Template.register_tag('envcreate', Jekyll::EnvCreate)
 Liquid::Template.register_tag('envoptions', Jekyll::EnvOptions)
 Liquid::Template.register_tag('equation', Jekyll::EquationLabel)
 
+def pre_render_acronyms(site)
+  puts "Executing pre render hook for acronyms"
+  strings = []
+  site.posts.docs.each do |post|
+    # Auto generates an acronym if not defined
+    if post.data['acronym'] == nil
+      post.data['acronym'] = post.data['title'].split.map { |word| word[0] }.join.upcase
+    end
+    strings << post.data['acronym']
+  end
+  unique_strings = unique_acronym(strings)
+  
+  # Replace the repeated strings
+  site.posts.docs.each_with_index do |post, index|
+    post.data['acronym'] = unique_strings[index]
+  end
+end
 
+# Ensures that the acronyms are unique and autogenerates from title
+Jekyll::Hooks.register :site, :pre_render do |site|
+  pre_render_acronyms(site)
+end
 
 # This hook runs after each page/post has been fully rendered (Liquid + layout)
 Jekyll::Hooks.register [:pages, :documents], :post_render do |item|
@@ -497,24 +551,48 @@ Jekyll::Hooks.register [:pages, :documents], :post_render do |item|
   site = item.site
   config = site.config
   ref = config['ref']
-
+  
   html = html.gsub(/<mathlabel>(.*?)<\/mathlabel>/m) do
     inner = Regexp.last_match(1).strip
+
     # Check if inner key exists
     if ref.key?(inner)
       equrl = ref[inner]['url']
       label = "#{ref[inner]['label']}"
+
       # Return an anchor link
       %(<a style="color:blue" href="#{equrl}">#{label}</a>)
     end
   end
-  
+
   item.output = html
+
+  inject_content_after_render(item)
 
   # Optional: log what’s happening (appears in build output)
   Jekyll.logger.info "PostRender:", "Processed #{item.relative_path}"
 end
 
 
+def inject_content_after_render(page)
+  html = page.output
+  plugin_dir = File.expand_path("extra", __dir__)
+  
+  css_content = File.read(File.join(plugin_dir, "link-highlight.css"))
+  js_content = File.read(File.join(plugin_dir, "box.js"))
+  html_content = File.read(File.join(plugin_dir, "mathjax.html"))
+  
+  content = 
+  <<~HTML
+  <body>
+  <script>#{js_content}</script>
+  <style>#{css_content}</style>
+  #{html_content}
+  HTML
+
+  # Inject the files inside head
+  html.sub!(/<body>/,content) 
+  page.output = html
+end
 
 
