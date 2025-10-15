@@ -82,7 +82,6 @@ class HashNavigation {
     navigateToElement(targetElement) {
         // First expand all necessary parent containers
         this.expandAllParentContainers(targetElement);
-        
         // Then scroll to the element
         setTimeout(() => {
             targetElement.scrollIntoView({ 
