@@ -53,10 +53,10 @@ function addIntercept(sourceFrame,targetFrame){
     const match = parts.length > 1 ? '#' + parts[1] : ''; 
 
     if (match) {
-      e.preventDefault();
       const targetSelector = match; 
       const target = targetDoc.getElementById(targetSelector.slice(1));  
       if (target) {
+        e.preventDefault();
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         
         // trigger :target animation by changing hash
