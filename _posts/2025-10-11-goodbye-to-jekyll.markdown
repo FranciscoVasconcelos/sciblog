@@ -70,7 +70,7 @@ some other equation with a new tag
 
 
 
-{% section subsection level=1 label=ugly-section %}
+{% section "This is a named section with spaces" level=1 label=ugly-section %}
 
 <!-- Create a definition  -->
 {% envlabel definition def:this:coco true %}
