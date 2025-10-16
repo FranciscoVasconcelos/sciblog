@@ -1,0 +1,368 @@
+---
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Class Element Fetcher - iFrame Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            padding: 30px;
+            min-height: 200px;
+        }
+
+        .message {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .iframe-container {
+            display: none;
+            width: 100%;
+            height: 0;
+            border: none;
+        }
+
+        .rendered-elements {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .element-item {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            position: relative;
+        }
+
+        .element-header {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 URL Class Element Fetcher</h1>
+            <p>Extract and display elements by class name using iFrame</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="urlInput">Website URL:</label>
+                <input type="text" id="urlInput" placeholder="https://example.com" />
+            </div>
+
+            <div class="input-group">
+                <label for="classInput">Class Name:</label>
+                <input type="text" id="classInput" placeholder="container" />
+            </div>
+
+            <button id="fetchBtn">Fetch Elements</button>
+        </div>
+
+        <div class="results-section" id="results"></div>
+        <iframe id="hiddenIframe" class="iframe-container"></iframe>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const classInput = document.getElementById('classInput');
+        const fetchBtn = document.getElementById('fetchBtn');
+        const results = document.getElementById('results');
+        const hiddenIframe = document.getElementById('hiddenIframe');
+
+        fetchBtn.addEventListener('click', fetchElements);
+
+        function showMessage(msg, type) {
+            results.innerHTML = `<div class="message ${type}">${msg}</div>`;
+        }
+
+        function showLoading() {
+            results.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 20px; color: #666;">Loading iframe and extracting elements...</p>
+                </div>
+            `;
+        }
+
+        function fetchElements() {
+            const url = urlInput.value.trim();
+            const className = classInput.value.trim();
+
+            if (!url) {
+                showMessage('Please enter a URL', 'error');
+                return;
+            }
+
+            if (!className) {
+                showMessage('Please enter a class name', 'error');
+                return;
+            }
+
+            showLoading();
+            fetchBtn.disabled = true;
+
+            hiddenIframe.onload = function() {
+                try {
+                    const iframeDoc = hiddenIframe.contentDocument || hiddenIframe.contentWindow.document;
+                    const elements = iframeDoc.getElementsByClassName(className);
+
+                    if (elements.length === 0) {
+                        showMessage(`No elements found with class "${className}"`, 'info');
+                    } else {
+                        displayElements(elements, className);
+                    }
+                } catch (err) {
+                    showMessage(
+                        `Error: ${err.message}. This is likely due to Cross-Origin restrictions. ` +
+                        `The iframe method only works with pages on the same domain or pages that allow iframe embedding (no X-Frame-Options restrictions).`,
+                        'error'
+                    );
+                } finally {
+                    fetchBtn.disabled = false;
+                }
+            };
+
+            hiddenIframe.onerror = function() {
+                showMessage('Failed to load the URL. The website may block iframe embedding.', 'error');
+                fetchBtn.disabled = false;
+            };
+
+            hiddenIframe.src = url;
+        }
+
+        function extractAndInjectCSS(iframeDoc) {
+            const styles = [];
+            
+            // Get all stylesheets from the iframe
+            const styleSheets = iframeDoc.styleSheets;
+            for (let i = 0; i < styleSheets.length; i++) {
+                try {
+                    const sheet = styleSheets[i];
+                    
+                    // If it's an external stylesheet, create a link tag
+                    if (sheet.href) {
+                        const link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.href = sheet.href;
+                        styles.push(link.outerHTML);
+                    } 
+                    // If it's an inline style, get the CSS rules
+                    else if (sheet.cssRules) {
+                        let cssText = '';
+                        for (let j = 0; j < sheet.cssRules.length; j++) {
+                            cssText += sheet.cssRules[j].cssText + '\n';
+                        }
+                        if (cssText) {
+                            styles.push(`<style>${cssText}</style>`);
+                        }
+                    }
+                } catch (e) {
+                    // Can't access cross-origin stylesheets
+                    console.warn('Could not access stylesheet:', e);
+                }
+            }
+            
+            // Get all inline style tags
+            const styleTags = iframeDoc.querySelectorAll('style');
+            styleTags.forEach(tag => {
+                styles.push(tag.outerHTML);
+            });
+            
+            return styles.join('\n');
+        }
+
+        function displayElements(elements, className) {
+            const iframeDoc = hiddenIframe.contentDocument || hiddenIframe.contentWindow.document;
+            const cssContent = extractAndInjectCSS(iframeDoc);
+            
+            results.innerHTML = `
+                <div class="message success">
+                    Found ${elements.length} element(s) with class "${className}"
+                </div>
+                <div class="rendered-elements" id="elementsList"></div>
+            `;
+
+            const elementsList = document.getElementById('elementsList');
+
+            // Inject CSS at the beginning
+            if (cssContent) {
+                const cssContainer = document.createElement('div');
+                cssContainer.innerHTML = cssContent;
+                document.head.appendChild(cssContainer);
+            }
+
+            for (let i = 0; i < elements.length; i++) {
+                const div = document.createElement('div');
+                div.className = 'element-item';
+                
+                const header = document.createElement('div');
+                header.className = 'element-header';
+                header.textContent = `Element ${i + 1} of ${elements.length}`;
+                
+                const content = document.createElement('div');
+                content.innerHTML = elements[i].outerHTML;
+                
+                div.appendChild(header);
+                div.appendChild(content);
+                elementsList.appendChild(div);
+            }
+        }
+    </script>
+</body>
+</html>
