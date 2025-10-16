@@ -7,6 +7,7 @@ acronym: P
 ---
 
 
+{% envcreate lemma 1 %}
 
 {% ref sec:here %}
 
@@ -18,4 +19,18 @@ This is a link to an equation {% ref eq:pi:3 %}
 
 {% section "this is a section" level=0 label=sec:here %}
 {% section "this is another section" level=1 label=sec:ther %}
+
+{% envlabel lemma lemma:this:theorem false %}
+This is a lemma for einstein
+$$
+E=mc^2
+$$
+
+some other equation with a new tag 
+
+{% equation eq:pi:3 %}
+\pi = \sum_k \pi_k^{\theta_k}
+{% endequation %}
+
+{% endenvlabel %}
 

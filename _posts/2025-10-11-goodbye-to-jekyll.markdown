@@ -9,7 +9,7 @@ section_with_acronym: true
 
 
 
-{% envoptions equation 2 %}
+{% envoptions equation 1 %}
 
 <!-- Create theorem env labeled by section 
 This add the css files -->
@@ -90,6 +90,7 @@ And if I add <a href="www.fuck.com">this</a>
 
 {% section othersubsection level=1 label=some-label %}
 {% section other-other-subsection level=2 label=some-other-label %}
+{% section other-other-subsubsection level=3 %}
 
 {% ref eq:pi:3 %}
 
@@ -98,3 +99,34 @@ And if I add <a href="www.fuck.com">this</a>
 
 
 [Link to a page]({% link _posts/2025-10-11-welcome-to-jekyll.markdown %})
+
+{% envlabel theorem theo:this:theorem:other true %}
+This is a theorem for einstein
+$$
+e^x = \sum_{k=0}^\infty \frac{x^k}{k!}
+$$
+
+some other equation with a new tag 
+
+{% equation eq:pi:7 %}
+f(x) = \sum_k a_k x^k
+{% endequation %}
+
+{% endenvlabel %}
+
+{% envproof theorem theo:this:theorem:other %}
+This is a crappy proof of the theorem. Use $\eqref{the:coco:eq}$ to show that 
+
+{% equation %}
+B = \sum_\ell \sqrt{\sum_i\sum_j f_i(\frac{a_i}{s_\ell},\beta_j)}^3
+{% endequation %}
+
+some text here. 
+{% equation %}
+\pi = \sum_k \pi_k^{\theta_k}
+{% endequation %}
+And if I add <a href="www.fuck.com">this</a>
+
+{% endenvproof %}
+
+

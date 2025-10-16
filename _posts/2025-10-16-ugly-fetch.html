@@ -1,0 +1,275 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Dropdown</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+
+    
+    .iframe-container {
+        display: none;
+        width: 100%;
+        height: 0;
+        border: none;
+    }
+
+    /* Fixed sidenav, full height */
+    .sidenav {
+      height: 100%;
+      width: 300px;
+      position: fixed;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      background-color: #111;
+      overflow-x: hidden;
+      padding-top: 20px;
+    }
+
+    /* Style the sidenav links and the dropdown button */
+    .sidenav a, .dropdown-btn {
+      padding: 6px 8px 6px 16px;
+      text-decoration: none;
+      font-size: 20px;
+      color: #818181;
+      display: block;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* On mouse-over */
+    .sidenav a:hover, .dropdown-btn:hover {
+      color: #f1f1f1;
+    }
+
+    /* Main content */
+    .main {
+      margin-left: 300px;
+      font-size: 20px;
+      padding: 0px 10px;
+    }
+
+    /* Add an active class to the active dropdown button */
+    .active {
+      background-color: green;
+      color: white;
+    }
+
+    /* Dropdown container (hidden by default) */
+    .dropdown-container {
+      display: none;
+      background-color: #262626;
+      padding-left: 8px;
+    }
+
+    /* Style the caret down icon */
+    .fa-caret-down {
+      float: right;
+      padding-right: 8px;
+    }
+
+    /* Some media queries for responsiveness */
+    @media screen and (max-height: 450px) {
+      .sidenav {padding-top: 15px;}
+      .sidenav a {font-size: 18px;}
+    }
+  </style>
+</head>
+<body>
+  <iframe id="hiddenIframe" class="iframe-container"></iframe>
+  
+  <div class="sidenav" id="sidenav">
+      {% for post in site.posts %}
+      <!-- Ignore fetch and scroll pages  -->
+        {% if post.title != "Fetch" and post.title != "Scroll" %}
+          <button class="dropdown-btn" onclick="fetchElements('{{ post.url }}',this)">
+            {{ post.title }}
+            <span class="fa-caret-down">▼</span>
+          </button>
+          <div class="dropdown-container"></div>
+        {% endif %}
+      {% endfor %}
+
+  </div>
+
+  <div class="main">
+    <h2>Simple Dropdown Menu</h2>
+    <p>Click on the dropdown buttons in the sidebar to see the dropdown content.</p>
+    <p>This example uses the exact styling you provided for a clean, simple dropdown menu.</p>
+    <div id="elementsList"></div>
+  </div>
+
+  <script>
+    const hiddenIframe = document.getElementById('hiddenIframe');
+    const sidenav = document.getElementById("sidenav");
+    const fetchedButtons = [];
+    const results = document.getElementById('results');
+    const addedClasses = [];
+    function capitalizeFirstLetter(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    function fetchElements(rel_url,button){
+      if(fetchedButtons.includes(button)) return;
+
+	    const origin = window.location.origin;
+      const url = origin + rel_url;
+      if(!url){
+        console.log("The fuck. This is not suppose to happen....");
+        return;
+      }
+
+      hiddenIframe.onload = function() {
+        const iframeDoc= hiddenIframe.contentDocument || hiddenIframe.contentWindow.document;
+        const classNames = iframeDoc.querySelectorAll('[class]');
+    
+        classNamesList = [];
+        // Get all class names ending with "-box"
+        classNames.forEach(elem => {
+          className = elem.className;
+          if(typeof className == 'string' && className.endsWith("-box"))
+            classNamesList.push(className.split(" ")[0]);
+          });
+          // Remove repeated elements
+          classNamesList = classNamesList.filter((item, index, array) => array.indexOf(item) === index);
+          
+          content = button.nextElementSibling;
+          classNamesList.forEach(elem => {
+            const child = document.createElement("button");
+            child.className = "dropdown-btn";
+            child.textContent = capitalizeFirstLetter(elem.replace("-box",""));
+            child.value = elem;
+            child.addEventListener("click",function(){
+              if(!addedClasses.includes(elem+button.textContent)){
+                addElements(elem);
+                addedClasses.push(elem+button.textContent);
+              }
+            });
+            content.appendChild(child);
+          });
+                    
+          if(!classNamesList.length){
+              const child = document.createElement("button");
+              child.className = "dropdown-btn";
+              child.textContent = "⚠ No classes in this post!";
+              child.style.color = "#d60000";
+              content.appendChild(child);
+          }
+          content.style.display = "block";
+          content.classList.toggle("active");
+      }
+      
+      // Set the Iframe url
+      hiddenIframe.src = url;
+      fetchedButtons.push(button);
+    }
+
+    function addElements(className){
+      const iframeDoc = hiddenIframe.contentDocument || hiddenIframe.contentWindow.document;
+      const elements = iframeDoc.getElementsByClassName(className);
+      if (elements.length === 0) {
+          console.log(`No elements found with class "${className}"`, 'info');
+      } else {
+          displayElements(elements, className);
+      }
+    }
+
+    
+    function extractAndInjectCSS(iframeDoc) {
+        const styles = [];
+        
+        // Get all stylesheets from the iframe
+        const styleSheets = iframeDoc.styleSheets;
+        for (let i = 0; i < styleSheets.length; i++) {
+            try {
+                const sheet = styleSheets[i];
+                
+                // If it's an external stylesheet, create a link tag
+                if (sheet.href) {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = sheet.href;
+                    styles.push(link.outerHTML);
+                } 
+                // If it's an inline style, get the CSS rules
+                else if (sheet.cssRules) {
+                    let cssText = '';
+                    for (let j = 0; j < sheet.cssRules.length; j++) {
+                        cssText += sheet.cssRules[j].cssText + '\n';
+                    }
+                    if (cssText) {
+                        styles.push(`<style>${cssText}</style>`);
+                    }
+                }
+            } catch (e) {
+                // Can't access cross-origin stylesheets
+                console.warn('Could not access stylesheet:', e);
+            }
+        }
+        
+        // Get all inline style tags
+        const styleTags = iframeDoc.querySelectorAll('style');
+        styleTags.forEach(tag => {
+            styles.push(tag.outerHTML);
+        });
+        
+        return styles.join('\n');
+    }
+
+
+    function displayElements(elements, className) {
+        const iframeDoc = hiddenIframe.contentDocument || hiddenIframe.contentWindow.document;
+        const cssContent = extractAndInjectCSS(iframeDoc);
+        
+        const elementsList = document.getElementById('elementsList');
+
+        // Inject CSS at the beginning
+        if (cssContent) {
+            const cssContainer = document.createElement('div');
+            cssContainer.innerHTML = cssContent;
+            document.head.appendChild(cssContainer);
+        }
+
+        for (let i = 0; i < elements.length; i++) {               
+            const content = document.createElement('div');
+            content.innerHTML = elements[i].outerHTML;
+            elementsList.appendChild(content);
+        }
+    }
+
+
+
+
+    // Get all dropdown buttons
+    var dropdown = document.getElementsByClassName("dropdown-btn");
+
+    // Loop through all dropdown buttons
+    for (var i = 0; i < dropdown.length; i++) {
+      dropdown[i].addEventListener("click", function() {
+        // Toggle active class
+        this.classList.toggle("active");
+        
+        // Toggle display of dropdown content
+        var dropdownContent = this.nextElementSibling;
+        if (dropdownContent.style.display === "block") {
+          dropdownContent.style.display = "none";
+        } else {
+          dropdownContent.style.display = "block";
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
