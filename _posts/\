@@ -228,8 +228,40 @@
 </ul>
 </div>
 
+    <script>
+        function handleClick(value) {
+
+
+            const origin = window.location.origin;
+            // This function will be called with the button's value
+            console.log('Button clicked with value:', origin+value);
+            
+            // Display the value
+            // document.getElementById('result').textContent = value;
+            
+            // You can do whatever you need with the value here
+            // For example: send to API, update state, etc.
+        }
+    </script>
     <div class="container">
- 
+        <div class="header">
+            <h1>🔍 URL Class Element Fetcher</h1>
+            <p>Extract and display elements by class name using iFrame</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="urlInput">Website URL:</label>
+                <input type="text" id="urlInput" placeholder="https://example.com" />
+            </div>
+
+            <div class="input-group">
+                <label for="classInput">Class Name:</label>
+                <input type="text" id="classInput" placeholder="container" />
+            </div>
+
+            <button id="fetchBtn">Fetch Elements</button>
+        </div>
 
         <div class="results-section" id="results"></div>
         <iframe id="hiddenIframe" class="iframe-container"></iframe>
@@ -241,7 +273,6 @@
         const fetchBtn = document.getElementById('fetchBtn');
         const results = document.getElementById('results');
         const hiddenIframe = document.getElementById('hiddenIframe');
-        const addedClasses = [];
 
         fetchBtn.addEventListener('click', fetchElements);
 
@@ -268,20 +299,6 @@
                     }
 	}
 
-        function addElements(className){
-          if(!addedClasses.includes(className)){
-              addedClasses.push(className);
-              const iframeDoc = hiddenIframe.contentDocument || hiddenIframe.contentWindow.document;
-	            const elements = iframeDoc.getElementsByClassName(className);
-              if (elements.length === 0) {
-                  showMessage(`No elements found with class "${className}"`, 'info');
-              } else {
-                  displayElements(elements, className);
-              }
-          }
-        }
-
-
         function fetchElements(value) {
 	          const origin = window.location.origin;
             const url = origin+value;
@@ -305,27 +322,50 @@
                 if(typeof classList == "string" && classList.endsWith("-box"))
                   list.push(classList.split(" ")[0]);
               });
-              // Remove repeated elements
-              const flist = list.filter((item, index, array) => array.indexOf(item) === index);
 
-              console.log(flist);
+              list = list.filter((item, index, array) => array.indexOf(item) === index);
 
-              // Get the parent element by its ID
-              const parent = document.getElementById("env-list");
-
-              flist.forEach(elem => {
-                // Create a new child element
-                const child = document.createElement("button");
-                child.textContent = elem;
-                child.addEventListener("click",function(){
-                  addElements(elem);
-                });
-
-                // Add the child to the parent
-                parent.appendChild(child);               
-              });
+              console.log(list);
             };
 
+            //if (!className) {
+            //    showMessage('Please enter a class name', 'error');
+            //    return;
+            //}
+
+            //showLoading();
+            //fetchBtn.disabled = true;
+
+            //hiddenIframe.onload = function() {
+                //try {
+
+			            //const iframeDoc = hiddenIframe.contentDocument || hiddenIframe.contentWindow.document;
+                  //const allClasses = iframeDoc.querySelectorAll('[class]');
+
+              // const allClasses = getAllClassesFromIframe(hiddenIframe);
+                  //const boxClasses = allClasses.filter(className => className.endsWith('-box'));
+                  //console.log(allClasses);
+              //const list = [];
+//allClasses.forEach(element => {
+            // Get the class attribute value
+             // const classList = element.className;
+ // if(classList.endWith('-box')){
+  // list.push(classList);
+ // }
+//};
+        // console.log(list);
+
+            //} catch (err) {
+              //      showMessage(
+                //        `Error: ${err.message}. This is likely due to Cross-Origin restrictions. ` +
+                  //      `The iframe method only works with pages on the same domain or pages that allow iframe embedding (no X-Frame-Options restrictions).`,
+                    //    'error'
+                   // );
+                //} finally {
+                 //   fetchBtn.disabled = false;
+               // }
+
+//};
             hiddenIframe.src = url;
         }
 
@@ -374,17 +414,13 @@
         function displayElements(elements, className) {
             const iframeDoc = hiddenIframe.contentDocument || hiddenIframe.contentWindow.document;
             const cssContent = extractAndInjectCSS(iframeDoc);
-            const elementsList0 = document.getElementById('elementsList');
             
-            if(elementsList0 == null){
-              //console.log(elementsList0.children);
-              results.innerHTML = `
-                  <div class="message success">
-                     Found ${elements.length} element(s) with class "${className}"
-                 </div>
-                  <div class="rendered-elements" id="elementsList"></div>
-              `;
-            }
+            results.innerHTML = `
+                <div class="message success">
+                    Found ${elements.length} element(s) with class "${className}"
+                </div>
+                <div class="rendered-elements" id="elementsList"></div>
+            `;
 
             const elementsList = document.getElementById('elementsList');
 
@@ -410,7 +446,6 @@
                 div.appendChild(content);
                 elementsList.appendChild(div);
             }
-
         }
     </script>
 </body>
