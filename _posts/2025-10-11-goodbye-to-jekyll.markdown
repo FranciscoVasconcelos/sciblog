@@ -26,9 +26,7 @@ This → {% ref some-label %} is a link to a section
 
 
 
-{% section "A section with spaces" level=0 %}
 
-{% section firstsubsection level=1 label=first-label %}
 <!-- Create a theorem  -->
 {% envlabel theorem theo:this:theorem true %}
 This is a theorem for einstein
@@ -38,12 +36,17 @@ $$
 
 some other equation with a new tag 
 
-{% equation eq:pi:3 %}
+{% equation eq:pi:5 %}
 \pi = \sum_k \pi_k^{\theta_k}
 {% endequation %}
 
 {% endenvlabel %}
 
+
+{% section "A section with spaces" level=0 %}
+{% section "Anoter section with spaces" level=0 %}
+
+{% section firstsubsection level=1 label=first-label %}
 
 # **bold header**
 
@@ -122,11 +125,11 @@ B = \sum_\ell \sqrt{\sum_i\sum_j f_i(\frac{a_i}{s_\ell},\beta_j)}^3
 {% endequation %}
 
 some text here. 
-{% equation %}
+{% equation eq:wtf:2 %}
 \pi = \sum_k \pi_k^{\theta_k}
 {% endequation %}
 And if I add <a href="www.fuck.com">this</a>
 
 {% endenvproof %}
 
-
+{% ref P-1. %}

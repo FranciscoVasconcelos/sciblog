@@ -106,6 +106,21 @@ def save_ref(url,label,key,site)
 
   # Store ref in the global config
   site.config["ref"] ||= {}
+  
+  # Check if key exists 
+  if site.config['ref'].key?(key)
+    # Get existing url and labels from dict
+    elabel = site.config['ref']["label"]
+    eurl = site.config['ref']["url"]
+
+    # If it is a the same label and url ignore 
+    return if (eurl == url) && (elabel == label)
+    # else return error
+    raise "Key '#{key}' already exists"
+  end
+  # Raise error if key already exists
+  # raise "Key '#{key}' already exists" if site.config['ref'].key?(key)
+
   site.config["ref"][key] = ref
 end
 
@@ -128,9 +143,13 @@ def get_number_from_context(context,level)
   # This function generates a number from the section counter 
   # It extracts the counter until a section level
   
+  context["section"] ||= {}
+  context["section"]["counter"] ||= []
+
   number_str = ""
-  context["section"]["counter"].each_with_index do |element,index|
-    break if index > level
+  # Loop until level
+  for index in 0..level
+    element = context["section"]["counter"][index]
     if element == nil
       context["section"]["counter"][index] = 0
     end
@@ -287,18 +306,14 @@ module Jekyll
         end
       end
       
-      number_str,_ = gen_and_save_ref(context,@level,-1,"math-ref-#{@ref}")
+      number_str,anchor = gen_and_save_ref(context,@level,-1,"math-ref-#{@ref}")
       
       acronym = ""
       if context["section"]["withacronym"]
         acronym = "#{page["acronym"]}-"
       end
 
-
-      if @ref != ""
-        @ref = "{\#math-ref-#{@ref}}"
-      end
-      return "\#"*(@level+1) + " **#{acronym}#{number_str}** #{@header} #{@ref}"
+      return "\#"*(@level+1) + " **#{acronym}#{number_str}** #{@header} {\##{anchor}}"
 
     end
   end
