@@ -1,0 +1,224 @@
+---
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Dropdown</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+
+    
+    .iframe-container {
+        display: none;
+        width: 100%;
+        height: 0;
+        border: none;
+    }
+
+    /* Fixed sidenav, full height */
+    .sidenav {
+      height: 100%;
+      width: 300px;
+      position: fixed;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      background-color: #111;
+      overflow-x: hidden;
+      padding-top: 20px;
+    }
+
+    /* Style the sidenav links and the dropdown button */
+    .sidenav a, .dropdown-btn {
+      padding: 6px 8px 6px 16px;
+      text-decoration: none;
+      font-size: 20px;
+      color: #818181;
+      display: block;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* On mouse-over */
+    .sidenav a:hover, .dropdown-btn:hover {
+      color: #f1f1f1;
+    }
+
+    /* Main content */
+    .main {
+      margin-left: 300px;
+      font-size: 20px;
+      padding: 0px 10px;
+    }
+
+    /* Add an active class to the active dropdown button */
+    .active {
+      background-color: green;
+      color: white;
+    }
+
+    /* Dropdown container (hidden by default) */
+    .dropdown-container {
+      display: none;
+      background-color: #262626;
+      padding-left: 8px;
+    }
+
+    /* Style the caret down icon */
+    .fa-caret-down {
+      float: right;
+      padding-right: 8px;
+    }
+
+    /* Some media queries for responsiveness */
+    @media screen and (max-height: 450px) {
+      .sidenav {padding-top: 15px;}
+      .sidenav a {font-size: 18px;}
+    }
+  </style>
+</head>
+<body>
+  
+  <repeat-element style="display:none" url="/jekyll/update/2025/10/11/welcome-to-jekyll.html#math-ref-lemma:this:theorem"></repeat-element>
+
+
+  <script>
+
+    const IframesDict = {};
+    const postsLinks =
+    [{% for post in site.posts %}
+      "{{post.url}}",
+    {% endfor %}];
+
+  console.log(postsLinks);
+
+  for(let i = 0; i < postsLinks.length; i++){
+    const iframe = document.createElement("iframe");
+    IframesDict[postsLinks[i]] = iframe;
+  }
+
+  function parseURL(url) {
+  try {
+    const urlObj = new URL(url);
+    const domain = urlObj.origin;
+    const relativePath = urlObj.pathname + urlObj.search;
+    const anchor = urlObj.hash ? urlObj.hash.slice(1) : '';
+    
+    return {domain,relativePath,anchor};
+  } catch (e) {
+    return {
+      error: 'Invalid URL',
+      message: e.message
+    };
+  }
+}
+    
+
+    function extractAndInjectCSS(iframe) {
+
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        const styles = [];
+        const cssContainer = document.createElement('div');
+        
+        // Get all stylesheets from the iframe
+        const styleSheets = iframeDoc.styleSheets;
+        for (let i = 0; i < styleSheets.length; i++) {
+            try {
+                const sheet = styleSheets[i];
+                
+                // If it's an external stylesheet, create a link tag
+                if (sheet.href) {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = sheet.href;
+                    styles.push(link.outerHTML);
+                } 
+                // If it's an inline style, get the CSS rules
+                else if (sheet.cssRules) {
+                    let cssText = '';
+                    for (let j = 0; j < sheet.cssRules.length; j++) {
+                        cssText += sheet.cssRules[j].cssText + '\n';
+                    }
+                    if (cssText) {
+                        styles.push(`<style>${cssText}</style>`);
+                    }
+                }
+            } catch (e) {
+                // Can't access cross-origin stylesheets
+                console.warn('Could not access stylesheet:', e);
+            }
+        }
+        
+        // Get all inline style tags
+        const styleTags = iframeDoc.querySelectorAll('style');
+        styleTags.forEach(tag => {
+            styles.push(tag.outerHTML);
+        });
+        
+        cssContent = styles.join('\n');
+        if(cssContent){
+          cssContainer.innerHTML = cssContent;
+          document.head.appendChild(cssContainer);
+        }
+    }
+
+  
+    function displayElementAfter(iframe,anchor,refElem){
+        // get element with id=anchor from iframe
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        elem = iframeDoc.getElementById(anchor);
+
+        const content = document.createElement('div');
+        content.innerHTML = elem.outerHTML;
+        refElem.insertAdjacentElement('afterend', content);
+    }
+
+  function getElement(refElem){
+    const url = refElem.getAttribute("url");
+    const origin = window.location.origin;
+    let { domain, relativePath, anchor } = parseURL(url);
+ 
+    if(typeof domain === 'undefined'){
+      domain = origin;
+      [relativePath,anchor] = url.split("#");
+    }
+
+    // Ignore if key does not exists
+    if((typeof IframesDict[relativePath]) === 'undefined') return;
+    
+    iframe = IframesDict[relativePath];
+    loaded = (iframe.contentDocument && iframe.contentDocument.readyState === 'complete');
+    if(!loaded){
+      iframe.addEventListener('load',function() {
+        extractAndInjectCSS(iframe);
+        getElement(refElem);
+      });
+
+      iframe.src = domain + relativePath;
+      iframe.className = "iframe-container";
+      document.body.appendChild(iframe);
+    }else{
+      displayElementAfter(iframe,anchor,refElem);
+    }
+
+  }
+    const elements = document.getElementsByTagName('repeat-element');
+
+    for(const elem of elements){
+      getElement(elem);
+    }
+
+  </script>
+
+</body>
+</html>

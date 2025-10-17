@@ -34,7 +34,6 @@ some other equation with a new tag
 
 {% endenvlabel %}
 
-This will throw error
 {% equation eq:wtf %}
-\pi = \sum_k \pi_k^{\theta_k}
+\pi = \sum_k \frac{\pi_k^{\theta_k}}{\rho_k}
 {% endequation %}

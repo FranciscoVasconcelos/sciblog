@@ -346,6 +346,34 @@ module Jekyll
 end
 
 module Jekyll
+  class Repeat < Liquid::Tag
+    def initialize(tag_name,markup,tokens)
+      super
+        
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+
+      positional, named = parse_params(markup)
+      @label = positional[0] || named["label"]
+
+      # Must give error if @label is nil
+    end
+
+    def render(context)
+  
+      <<~HTML
+      <repeat-element>math-ref-#{@label}</repeat-element>
+      HTML
+
+    end
+  end
+end
+
+
+
+module Jekyll
   class EnvProof < Liquid::Block
     def initialize(tag_name, markup, tokens)
       super
@@ -533,6 +561,7 @@ Liquid::Template.register_tag('envproof', Jekyll::EnvProof)
 Liquid::Template.register_tag('envcreate', Jekyll::EnvCreate)
 Liquid::Template.register_tag('envoptions', Jekyll::EnvOptions)
 Liquid::Template.register_tag('equation', Jekyll::EquationLabel)
+Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 
 def pre_render_acronyms(site)
   puts "Executing pre render hook for acronyms"
@@ -552,13 +581,48 @@ def pre_render_acronyms(site)
   end
 end
 
+def inject_script(site,filename)
+  # Build the posts links array
+  posts_links = site.posts.docs.map { |post| post.url }.to_json
+  
+  # Read your main JavaScript file
+  plugin_dir = File.expand_path("extra", __dir__)
+  js_content = File.read(File.join(plugin_dir, filename))
+  
+  # Create the complete script with posts data
+  complete_script = <<~JS
+    const postsLinks = #{posts_links};
+    
+    #{js_content}
+  JS
+  
+    # site.pages.each do |page|
+  #   if page.output_ext == ".html"
+  #     page.output.sub!(/<\/body>/, "<script>#{complete_script}</script></body>")
+  #   end
+  # end
+  
+  # Inject into all HTML posts
+  site.posts.docs.each do |post|
+    if post.output_ext == ".html"
+      post.output.sub!(/<\/body>/, "<script>#{complete_script}</script></body>")
+    end
+  end
+end
+
+
 # Ensures that the acronyms are unique and autogenerates from title
 Jekyll::Hooks.register :site, :pre_render do |site|
   pre_render_acronyms(site)
 end
 
+
+Jekyll::Hooks.register :site, :post_render do |site|
+  inject_script(site,"repeat.js");
+end
+
 # This hook runs after each page/post has been fully rendered (Liquid + layout)
-Jekyll::Hooks.register [:pages, :documents], :post_render do |item|
+Jekyll::Hooks.register :posts, :post_render do |item|
   # Look for mathlabel elements and transform them into links
   # It uses the stored links in the config['ref']
 
@@ -579,6 +643,19 @@ Jekyll::Hooks.register [:pages, :documents], :post_render do |item|
       %(<a style="color:blue" href="#{equrl}">#{label}</a>)
     end
   end
+
+  html = html.gsub(/<repeat-element>(.*?)<\/repeat-element>/m) do
+    key = Regexp.last_match(1).strip
+
+    # Check if inner key exists
+    if ref.key?(key)
+      equrl = ref[key]['url']
+      label = "#{ref[key]['label']}"
+
+      # Return a repeat-element with url
+      %(<repeat-element style="display:none" url="#{equrl}">#{label}</repeat-element>)
+    end
+  end 
 
   item.output = html
 

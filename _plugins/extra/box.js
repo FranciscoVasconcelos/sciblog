@@ -1,14 +1,3 @@
-function  getElementFromHash(hash) {
-  if (!hash) return null;
-  
-  // Remove the # and URL-decode
-  const id = decodeURIComponent(hash.substring(1));
-  
-  // Use getElementById - doesn't require CSS escaping
-  return document.getElementById(id);
-}
-
-
 class HashNavigation {
     constructor() {
         this.currentHash = '';

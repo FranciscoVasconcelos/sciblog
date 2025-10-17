@@ -133,3 +133,6 @@ And if I add <a href="www.fuck.com">this</a>
 {% endenvproof %}
 
 {% ref P-1. %}
+
+
+{% repeat theo:this:theorem %}
