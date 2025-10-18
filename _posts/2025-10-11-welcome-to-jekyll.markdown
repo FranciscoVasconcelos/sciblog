@@ -20,7 +20,7 @@ This is a link to an equation {% ref eq:pi:3 %}
 {% section "this is a section" level=0 label=sec:here %}
 {% section "this is another section" level=1 label=sec:ther %}
 
-{% envlabel lemma lemma:this:theorem false %}
+{% envlabel lemma lemma:this:theorem true %}
 This is a lemma for einstein
 $$
 E=mc^2
@@ -37,4 +37,14 @@ some other equation with a new tag
 {% equation eq:wtf %}
 \pi = \sum_k \frac{\pi_k^{\theta_k}}{\rho_k}
 {% endequation %}
+
+{% envproof lemma lemma:this:theorem %}
+This is a proof for the lemma 
+
+
+$$
+A = \int\sum_k a_k(x)v_k(x,y)dx
+$$
+{% endenvproof %}
+
 

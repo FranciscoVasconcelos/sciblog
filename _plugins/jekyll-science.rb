@@ -94,35 +94,80 @@ def gen_and_save_ref_II(context,envname,label)
   envcounter = context[envname]["counter"]
   anchor = "math-ref-#{label}"
   
+  site = context.registers[:site]
+
+
   # If label is empty or nil autogenerate the anchor
-  _,anchor = gen_and_save_ref(context,context[envname]["countby"],envcounter,anchor)
+  _,anchor = gen_and_save_ref(context,site.config[envname]["countby"],envcounter,anchor)
   return anchor
   
 end
 
 
-def save_ref(url,label,key,site)
-  ref = {"url"=> url,"label"=>label}
-
-  # Store ref in the global config
+def saveRef(url,label,env,key,site)
+  # Initialize empty dictionary
   site.config["ref"] ||= {}
-  
-  # Check if key exists 
-  if site.config['ref'].key?(key)
-    # Get existing url and labels from dict
-    elabel = site.config['ref']["label"]
-    eurl = site.config['ref']["url"]
+  ref = site.config["ref"]
+  if ref.key?(key)
+    elabel = ref[key]["label"]
+    eurl = ref[key]["url"]
 
     # If it is a the same label and url ignore 
     return if (eurl == url) && (elabel == label)
     # else return error
     raise "Key '#{key}' already exists"
   end
-  # Raise error if key already exists
-  # raise "Key '#{key}' already exists" if site.config['ref'].key?(key)
-
-  site.config["ref"][key] = ref
+  site.config["ref"][key] = {"url"=>url,"label"=>label,"env"=>env}
 end
+
+
+def save_ref(url,label,key,site)
+  # Initialize empty dictionary
+  site.config["ref"] ||= {}
+  ref = site.config["ref"]
+  if ref.key?(key)
+    elabel = ref[key]["label"]
+    eurl = ref[key]["url"]
+
+    # If it is a the same label and url ignore 
+    return if (eurl == url) && (elabel == label)
+    # else return error
+    raise "Key '#{key}' already exists"
+  end
+  site.config["ref"][key] = {"url"=>url,"label"=>label}
+end
+
+def genRef(context,envname,label)
+  context[envname]["counter"] ||= 1
+  envcounter = context[envname]["counter"]
+  anchor = "math-ref-#{label}"
+  
+
+  page = context.registers[:page]
+  site = context.registers[:site]
+
+  level = site.config[envname]["countby"]
+
+  url  = page['url']
+  acronym = page['acronym']
+  
+  # Get the number from the section counters
+  number_str = get_number_from_context(context,level)
+  label_str = acronym + "-" + number_str + (envcounter == -1 ? "" : envcounter.to_s)
+  
+  # If the reference anchor is empty
+  if anchor == "math-ref-"
+    # Set a unique anchor from the label string
+    anchor = "math-ref-#{label_str}"
+  end
+
+  equrl = url + "\#" + anchor
+  
+  saveRef(equrl,label_str,envname,anchor,site)
+  return label_str,equrl,number_str
+end
+
+
 
 def get_url_label_from_config(context,key)
   site = context.registers[:site]
@@ -142,7 +187,7 @@ def getRefRef(ref,key)
   if (ref == nil) || ref[key] == nil
     raise "Key '#{key}' not found!"
   end
-  return ref[key]["url"],ref[key]["label"]
+  return ref[key]["url"],ref[key]["label"],ref[key]["env"]
 end
 
 def get_url_label(acronym,number,counter,url,anchor)
@@ -218,23 +263,24 @@ module Jekyll
       acronym = page['acronym']
       
       anchor = "math-ref-#{@label}"
-
+      
       context[@envname]["counter"] ||= 1
       envcounter = context[@envname]["counter"]
-      
+        
       # Create a label and an url and save it in the context
-      number_str = get_number_from_context(context,context[@envname]["countby"])
-      label_str,equrl = get_url_label(acronym,number_str,envcounter,url,anchor)
-      save_ref(equrl,label_str,anchor,site)
+      # number_str = get_number_from_context(context,context[@envname]["countby"])
+      # label_str,equrl = get_url_label(acronym,number_str,envcounter,url,anchor)
+      # save_ref(equrl,label_str,anchor,site)
+      label_str,equrl,number_str = genRef(context,@envname,@label)
 
       id = "#{@envname}#{number_str.gsub('.','_')}" # Define a unique id
 
       linkproof = ""
       if @proof 
-        proofname = context[@envname]['proofname']
+        proofname = site.config[@envname]['proofname']
         linkproof = 
         <<~HTML
-        See #{proofname} <mathlabel>#{anchor}:proof</mathlabel>
+        See <prooflabel>#{anchor}:proof</prooflabel>
         HTML
       end
 
@@ -297,6 +343,8 @@ module Jekyll
     def render(context)
       
       page = context.registers[:page]
+      site = context.registers[:site]
+
 
       context["section"] ||= {}
 
@@ -315,7 +363,7 @@ module Jekyll
       if context["envs"] != nil 
         context["envs"].each do |env|
           # Reset env counter when at specified level
-          if @level == context[env]["countby"]
+          if @level == site.config[env]["countby"]
             context[env]["counter"] = 1
           end
         end
@@ -359,6 +407,33 @@ module Jekyll
     end
   end
 end
+
+module Jekyll
+  class ProofReference < Liquid::Tag
+    def initialize(tag_name,markup,tokens)
+      super
+        
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+
+      positional, named = parse_params(markup)
+      @label = positional[0] || named["label"]
+
+      # Must give error if @label is nil
+    end
+
+    def render(context)
+     
+      <<~HTML
+      <mathlabel>math-ref-#{@label}</mathlabel>
+      HTML
+
+    end
+  end
+end
+
 
 module Jekyll
   class Repeat < Liquid::Tag
@@ -421,30 +496,25 @@ module Jekyll
       envurl = "#{url}\##{anchor}:proof"
 
       # Create a label and an url and save it in the context
-      number_str = get_number_from_context(context,context[@envname]["countby"])
+      number_str = get_number_from_context(context,site.config[@envname]["countby"])
       label_str,equrl = get_url_label(acronym,number_str,envcounter,url,anchor)
 
       save_ref(envurl,"here","#{anchor}:proof",site)
-      # Get url and label from site.config
-      # envurl,label_str = getRef(site,anchor)
-      # # Get ref from the global config
-      # ref = site.config["ref"][anchor]
-      #
-      # envurl = ref['url']
-      # label_str = ref['label']
-      #
+
       # The pre text for the box title
-      append_title = %(<a href="#{envurl}" style="color:blue">#{context[@envname]['proofname'].capitalize}</a> of)
+      # append_title = %(<a href="#{envurl}" style="color:blue">#{site.config[@envname]['proofname'].capitalize}</a> of)
  
       id = "#{@envname}#{label_str.gsub('.','_').gsub('-','_')}_proof" # Define a unique id
       content = super 
+      
+      # #{append_title} #{@envname} <mathlabel>#{anchor}</mathlabel>
 
       # The content with a toggle button inside
       <<~HTML
       <div class="#{@envname}-box" id="#{anchor}:proof">
       <div class='box'>
         <div class="header">
-            #{append_title} #{@envname} <mathlabel>#{anchor}</mathlabel>
+        <prooflabel>#{anchor}:proof</prooflabel>
         </div>
         <button class="hide-button" onclick="toggleContent#{id}()"></button>
         <div class="content">
@@ -489,12 +559,15 @@ module Jekyll
       envdict["countby"] = @countby.to_i
       envdict["proofname"] = @proofname
 
+      site = context.registers[:site]
+
       # Add the enviornment name to the context
-      context[@envname] = envdict
+      site.config[@envname] = envdict
+      context[@envname] ||= {} 
 
       # Add the env name to the list of envs
-      context['envs'] ||= []
-      context['envs'] << @envname
+      site.config['envs'] ||= []
+      site.config['envs'] << @envname
       
       # Add the default style 
       content = "<style>"
@@ -536,9 +609,6 @@ module Jekyll
 
       label_str_p = "(#{label_str})"
 
-      puts label_str_p
-
-
       context["equation"]["counter"] += 1
       content = super
       
@@ -567,13 +637,19 @@ module Jekyll
 
       @envname = named['envname'] || positional[0]
       @countby = named['countby'] || positional[1] || 0
+      @proofname = named['proofname'] || positional[2]
       # Give error if @envname is nil or empty 
 
     end
 
     def render(context)
+      site = context.registers[:site]
       context[@envname] ||= {}
-      context[@envname]["countby"] = (@countby || 0).to_i
+      site.config[@envname] ||= {}
+      site.config[@envname]["countby"] = (@countby || 0).to_i
+      if !@proofname 
+        site.config[@envname]["proofname"] = @proofname
+      end
       super
     end
   end
@@ -640,13 +716,7 @@ def inject_script(site,filename)
     
     #{js_content}
   JS
-  
-    # site.pages.each do |page|
-  #   if page.output_ext == ".html"
-  #     page.output.sub!(/<\/body>/, "<script>#{complete_script}</script></body>")
-  #   end
-  # end
-  
+   
   # Inject into all HTML posts
   site.posts.docs.each do |post|
     if post.output_ext == ".html"
@@ -675,25 +745,42 @@ def proofCheck(ref,key)
   if key.end_with?(":proof")
     keyenv = key[0..-7]
     if ref.key?(keyenv)
-      equrl,label = getRefRef(ref,keyenv)
-      return equrl,label
+      equrl,label,env = getRefRef(ref,keyenv)
+      return equrl,label,env
     end
   end
-  return nil,nil
+  return nil,nil,nil
 end
 
-def refProof(proofurl,envurl,label)
+def refProof(proofurl,envurl,label,proofname,envname)
   <<~HTML
-  <a style="color:red" href=#{proofurl}>proof</a> of <a href=#{envurl}>#{label}</a>
+  <a style="color:red" href=#{proofurl}>#{proofname.capitalize}</a> of #{envname} <a href=#{envurl}>#{label}</a>
   HTML
 end
 
-def linkProof(ref,key)
-  envurl,label = proofCheck(ref,key)
+def linkProof(site,key)
+  ref = site.config['ref']
+  envurl,label,env = proofCheck(ref,key)
   return nil if envurl == nil
   
-  proofurl,_ = getRefRef(ref,key)
-  refProof(proofurl,envurl,label)
+  proofurl,_,_ = getRefRef(ref,key)
+  proofname = site.config[env]['proofname']
+  refProof(proofurl,envurl,label,proofname,env)
+end
+
+def setProof(post,site)
+  html = post.output
+  html = html.gsub(/<prooflabel>(.*?)<\/prooflabel>/m) do
+    key = Regexp.last_match(1).strip
+    
+    html = linkProof(site,key)
+    if(html)
+      html
+    else
+      raise "Key #{key} does not exist"
+    end
+  end
+  post.output = html
 end
 
 def setRepeat(post,ref)
@@ -721,21 +808,15 @@ def setReference(post,ref)
   html = html.gsub(/<mathlabel>(.*?)<\/mathlabel>/m) do
     key = Regexp.last_match(1).strip
     
-    # Diferent link when proof
-    html = linkProof(ref,key)
-    if(html)
-      html
-    else
-      # Check if key exists
-      if ref.key?(key)
-        equrl = ref[key]['url']
-        label = "#{ref[key]['label']}"
+    # Check if key exists
+    if ref.key?(key)
+      equrl = ref[key]['url']
+      label = "#{ref[key]['label']}"
 
-        # Return an anchor link
-        %(<a style="color:blue" href="#{equrl}">#{label}</a>) 
-      else
-        raise "Key #{key} does not exist"
-      end
+      # Return an anchor link
+      %(<a style="color:blue" href="#{equrl}">#{label}</a>) 
+    else
+      raise "Key #{key} does not exist"
     end
   end
   post.output = html
@@ -767,81 +848,11 @@ Jekyll::Hooks.register :site, :post_render do |site|
     if post.output_ext == ".html"
       setRepeat(post,ref)
       setReference(post,ref)
+      setProof(post,site)
       injectAtEndBody(post,js_content)
       injectAtEndBody(post,extra_content)
     end
   end
-end
-
-# puts site.config['ref']
-# puts site.posts.docs.map
-# post.output.sub!(/<\/body>/, "<script>#{complete_script}</script></body>")
-
-# This hook runs after each page/post has been fully rendered (Liquid + layout)
-# Jekyll::Hooks.register [:posts,:documents], :post_render do |item|
-#   # Look for mathlabel elements and transform them into links
-#   # It uses the stored links in the config['ref']
-#
-#   html = item.output
-#   site = item.site
-#   config = site.config
-#   ref = config['ref']
-#
-#   html = html.gsub(/<mathlabel>(.*?)<\/mathlabel>/m) do
-#     inner = Regexp.last_match(1).strip
-#
-#     # Check if inner key exists
-#     if ref.key?(inner)
-#       equrl = ref[inner]['url']
-#       label = "#{ref[inner]['label']}"
-#
-#       # Return an anchor link
-#       %(<a style="color:blue" href="#{equrl}">#{label}</a>)
-#     end
-#   end
-#
-#   html = html.gsub(/<repeat-element>(.*?)<\/repeat-element>/m) do
-#     key = Regexp.last_match(1).strip
-#
-#     # Check if inner key exists
-#     if ref.key?(key)
-#       equrl = ref[key]['url']
-#       label = "#{ref[key]['label']}"
-#
-#       # Return a repeat-element with url
-#       %(<repeat-element style="display:none" url="#{equrl}">#{label}</repeat-element>)
-#     end
-#   end 
-#
-#   item.output = html
-#
-#   inject_content_after_render(item)
-#
-#   # Optional: log what’s happening (appears in build output)
-#   Jekyll.logger.info "PostRender:", "Processed #{item.relative_path}"
-# end
-#
-
-
-def inject_content_after_render(page)
-  html = page.output
-  plugin_dir = File.expand_path("extra", __dir__)
-  
-  css_content = File.read(File.join(plugin_dir, "link-highlight.css"))
-  js_content = File.read(File.join(plugin_dir, "box.js"))
-  html_content = File.read(File.join(plugin_dir, "mathjax.html"))
-  
-  content = 
-  <<~HTML
-  <body>
-  <script>#{js_content}</script>
-  <style>#{css_content}</style>
-  #{html_content}
-  HTML
-
-  # Inject the files inside head
-  html.sub!(/<body>/,content) 
-  page.output = html
 end
 
 
