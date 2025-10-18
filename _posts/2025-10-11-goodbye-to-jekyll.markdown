@@ -55,7 +55,7 @@ some other equation with a new tag
 {% section "This is a named section with spaces" level=1 label=ugly-section %}
 
 <!-- Create a definition  -->
-{% envlabel definition def:this:coco true %}
+{% envlabel definition def:this:coco false %}
 
 This is a definition labeled by subsection
 
@@ -136,3 +136,5 @@ And if I add <a href="www.fuck.com">this</a>
 
 
 {% repeat theo:this:theorem %}
+
+{% repeat eq:pi:3 %}

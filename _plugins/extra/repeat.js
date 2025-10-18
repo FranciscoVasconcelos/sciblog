@@ -84,17 +84,19 @@
   }
   
   
-    function displayElementAfter(iframe,anchor,refElem){
+    function displayElementAfter(iframeDoc,anchor,refElem){
         // get element with id=anchor from iframe
-        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        // const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         elem = iframeDoc.getElementById(anchor);
-        // Rename all ids of descendants
-        renameIdsRecursively(elem,suffix="-repeat");
+        if(!elem) return false;
           
 
         const content = document.createElement('div');
         content.innerHTML = elem.outerHTML;
+        // Rename all ids of descendants
+        renameIdsRecursively(content,suffix="-repeat");
         refElem.insertAdjacentElement('afterend', content);
+        return true;
     }
 
   function getElement(refElem){
@@ -106,11 +108,15 @@
       domain = origin;
       [relativePath,anchor] = url.split("#");
     }
+    
+    // The element is in this webpage
+    if(displayElementAfter(document,anchor,refElem)) return;
+
+    let iframe = IframesDict[relativePath];
 
     // Ignore if key does not exists
-    if((typeof IframesDict[relativePath]) === 'undefined') return;
+    if((typeof iframe) === 'undefined') return;
     
-    iframe = IframesDict[relativePath];
     loaded = (iframe.contentDocument && iframe.contentDocument.readyState === 'complete');
     if(!loaded){
       iframe.addEventListener('load',function() {
@@ -124,7 +130,8 @@
 
       document.body.appendChild(iframe);
     }else{
-      displayElementAfter(iframe,anchor,refElem);
+      let iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      displayElementAfter(iframeDoc,anchor,refElem);
     }
 
   }

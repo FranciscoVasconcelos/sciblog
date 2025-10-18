@@ -129,6 +129,21 @@ def get_url_label_from_config(context,key)
   return site.config["ref"][key]["url"],site.config["ref"][key]["label"]
 end
 
+# Get reference from site. Raise error if key not found
+def getRef(site,key)
+  if (site.config["ref"] == nil) || site.config["ref"][key] == nil
+    raise "Key '#{key}' not found!"
+  end
+  return site.config["ref"][key]["url"],site.config["ref"][key]["label"]
+end
+
+# Get reference from site. Raise error if key not found
+def getRefRef(ref,key)
+  if (ref == nil) || ref[key] == nil
+    raise "Key '#{key}' not found!"
+  end
+  return ref[key]["url"],ref[key]["label"]
+end
 
 def get_url_label(acronym,number,counter,url,anchor)
 
@@ -219,7 +234,7 @@ module Jekyll
         proofname = context[@envname]['proofname']
         linkproof = 
         <<~HTML
-        See #{proofname} <a href="#{equrl}:proof">here</a>.
+        See #{proofname} <mathlabel>#{anchor}:proof</mathlabel>
         HTML
       end
 
@@ -396,17 +411,30 @@ module Jekyll
 
       url = page['url']
       acronym = page['acronym']
+
+      # Counter for proof as if it were a normal env
+      context["proof"] = {}
+      context["proof"]["counter"] ||= 1
+      envcounter = context["proof"]["counter"]
     
       anchor = "math-ref-#{@label}"
-      
-      # The pre text for the box title
-      append_title = "#{context[@envname]['proofname'].capitalize} of"
+      envurl = "#{url}\##{anchor}:proof"
 
-      # Get ref from the global config
-      ref = site.config["ref"][anchor]
-      
-      envurl = ref['url']
-      label_str = ref['label']
+      # Create a label and an url and save it in the context
+      number_str = get_number_from_context(context,context[@envname]["countby"])
+      label_str,equrl = get_url_label(acronym,number_str,envcounter,url,anchor)
+
+      save_ref(envurl,"here","#{anchor}:proof",site)
+      # Get url and label from site.config
+      # envurl,label_str = getRef(site,anchor)
+      # # Get ref from the global config
+      # ref = site.config["ref"][anchor]
+      #
+      # envurl = ref['url']
+      # label_str = ref['label']
+      #
+      # The pre text for the box title
+      append_title = %(<a href="#{envurl}" style="color:blue">#{context[@envname]['proofname'].capitalize}</a> of)
  
       id = "#{@envname}#{label_str.gsub('.','_').gsub('-','_')}_proof" # Define a unique id
       content = super 
@@ -416,7 +444,7 @@ module Jekyll
       <div class="#{@envname}-box" id="#{anchor}:proof">
       <div class='box'>
         <div class="header">
-            #{append_title} #{@envname}<a href="#{envurl}">&nbsp;#{label_str}</a>
+            #{append_title} #{@envname} <mathlabel>#{anchor}</mathlabel>
         </div>
         <button class="hide-button" onclick="toggleContent#{id}()"></button>
         <div class="content">
@@ -581,6 +609,23 @@ def pre_render_acronyms(site)
   end
 end
 
+def appendPostsUrlVar(site,filename)
+  posts_links = site.posts.docs.map { |post| post.url }.to_json
+  # Read your main JavaScript file
+  plugin_dir = File.expand_path("extra", __dir__)
+  js_content = File.read(File.join(plugin_dir, filename))
+  
+  # Create the complete script with posts data
+  <<~HTML
+  <script>
+    const postsLinks = #{posts_links};
+    
+    #{js_content}
+  </script>
+  HTML
+
+end
+
 def inject_script(site,filename)
   # Build the posts links array
   posts_links = site.posts.docs.map { |post| post.url }.to_json
@@ -610,40 +655,49 @@ def inject_script(site,filename)
   end
 end
 
+def injectAtEndBody(post,content)
+  if post.output_ext == ".html"
+      post.output.sub!(/<\/body>/, "#{content}</body>")
+      return true
+  end
+  return false
+end
+
+
 
 # Ensures that the acronyms are unique and autogenerates from title
 Jekyll::Hooks.register :site, :pre_render do |site|
   pre_render_acronyms(site)
 end
 
-
-Jekyll::Hooks.register :site, :post_render do |site|
-  inject_script(site,"repeat.js");
-end
-
-# This hook runs after each page/post has been fully rendered (Liquid + layout)
-Jekyll::Hooks.register :posts, :post_render do |item|
-  # Look for mathlabel elements and transform them into links
-  # It uses the stored links in the config['ref']
-
-  html = item.output
-  site = item.site
-  config = site.config
-  ref = config['ref']
-  
-  html = html.gsub(/<mathlabel>(.*?)<\/mathlabel>/m) do
-    inner = Regexp.last_match(1).strip
-
-    # Check if inner key exists
-    if ref.key?(inner)
-      equrl = ref[inner]['url']
-      label = "#{ref[inner]['label']}"
-
-      # Return an anchor link
-      %(<a style="color:blue" href="#{equrl}">#{label}</a>)
+# Gets label string of the env of some proof
+def proofCheck(ref,key)
+  if key.end_with?(":proof")
+    keyenv = key[0..-7]
+    if ref.key?(keyenv)
+      equrl,label = getRefRef(ref,keyenv)
+      return equrl,label
     end
   end
+  return nil,nil
+end
 
+def refProof(proofurl,envurl,label)
+  <<~HTML
+  <a style="color:red" href=#{proofurl}>proof</a> of <a href=#{envurl}>#{label}</a>
+  HTML
+end
+
+def linkProof(ref,key)
+  envurl,label = proofCheck(ref,key)
+  return nil if envurl == nil
+  
+  proofurl,_ = getRefRef(ref,key)
+  refProof(proofurl,envurl,label)
+end
+
+def setRepeat(post,ref)
+  html = post.output
   html = html.gsub(/<repeat-element>(.*?)<\/repeat-element>/m) do
     key = Regexp.last_match(1).strip
 
@@ -654,16 +708,119 @@ Jekyll::Hooks.register :posts, :post_render do |item|
 
       # Return a repeat-element with url
       %(<repeat-element style="display:none" url="#{equrl}">#{label}</repeat-element>)
+    else
+      raise "Key #{key} does not exist"
     end
   end 
 
-  item.output = html
-
-  inject_content_after_render(item)
-
-  # Optional: log what’s happening (appears in build output)
-  Jekyll.logger.info "PostRender:", "Processed #{item.relative_path}"
+  post.output = html
 end
+
+def setReference(post,ref)
+  html = post.output
+  html = html.gsub(/<mathlabel>(.*?)<\/mathlabel>/m) do
+    key = Regexp.last_match(1).strip
+    
+    # Diferent link when proof
+    html = linkProof(ref,key)
+    if(html)
+      html
+    else
+      # Check if key exists
+      if ref.key?(key)
+        equrl = ref[key]['url']
+        label = "#{ref[key]['label']}"
+
+        # Return an anchor link
+        %(<a style="color:blue" href="#{equrl}">#{label}</a>) 
+      else
+        raise "Key #{key} does not exist"
+      end
+    end
+  end
+  post.output = html
+end
+
+def getContentExtra()
+  plugin_dir = File.expand_path("extra", __dir__)
+  
+  css_content = File.read(File.join(plugin_dir, "link-highlight.css"))
+  js_content = File.read(File.join(plugin_dir, "box.js"))
+  html_content = File.read(File.join(plugin_dir, "mathjax.html"))
+  
+  <<~HTML
+  <script>#{js_content}</script>
+  <style>#{css_content}</style>
+  #{html_content}
+  HTML
+end
+
+
+
+Jekyll::Hooks.register :site, :post_render do |site|
+  js_content  = appendPostsUrlVar(site,"repeat.js")
+  extra_content = getContentExtra()
+  ref = site.config['ref']
+  # inject_script(site,"repeat.js")
+  # Iterate over all posts
+  site.posts.docs.each do |post|
+    if post.output_ext == ".html"
+      setRepeat(post,ref)
+      setReference(post,ref)
+      injectAtEndBody(post,js_content)
+      injectAtEndBody(post,extra_content)
+    end
+  end
+end
+
+# puts site.config['ref']
+# puts site.posts.docs.map
+# post.output.sub!(/<\/body>/, "<script>#{complete_script}</script></body>")
+
+# This hook runs after each page/post has been fully rendered (Liquid + layout)
+# Jekyll::Hooks.register [:posts,:documents], :post_render do |item|
+#   # Look for mathlabel elements and transform them into links
+#   # It uses the stored links in the config['ref']
+#
+#   html = item.output
+#   site = item.site
+#   config = site.config
+#   ref = config['ref']
+#
+#   html = html.gsub(/<mathlabel>(.*?)<\/mathlabel>/m) do
+#     inner = Regexp.last_match(1).strip
+#
+#     # Check if inner key exists
+#     if ref.key?(inner)
+#       equrl = ref[inner]['url']
+#       label = "#{ref[inner]['label']}"
+#
+#       # Return an anchor link
+#       %(<a style="color:blue" href="#{equrl}">#{label}</a>)
+#     end
+#   end
+#
+#   html = html.gsub(/<repeat-element>(.*?)<\/repeat-element>/m) do
+#     key = Regexp.last_match(1).strip
+#
+#     # Check if inner key exists
+#     if ref.key?(key)
+#       equrl = ref[key]['url']
+#       label = "#{ref[key]['label']}"
+#
+#       # Return a repeat-element with url
+#       %(<repeat-element style="display:none" url="#{equrl}">#{label}</repeat-element>)
+#     end
+#   end 
+#
+#   item.output = html
+#
+#   inject_content_after_render(item)
+#
+#   # Optional: log what’s happening (appears in build output)
+#   Jekyll.logger.info "PostRender:", "Processed #{item.relative_path}"
+# end
+#
 
 
 def inject_content_after_render(page)

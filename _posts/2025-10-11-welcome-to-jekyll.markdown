@@ -37,3 +37,4 @@ some other equation with a new tag
 {% equation eq:wtf %}
 \pi = \sum_k \frac{\pi_k^{\theta_k}}{\rho_k}
 {% endequation %}
+
