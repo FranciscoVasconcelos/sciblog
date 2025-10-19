@@ -65,29 +65,6 @@ def count_sub_prefixes(str)
 end
 
 
-def gen_and_save_ref(context,level,envcounter,anchor)
-  # Create a label and an url and save it in the context
-  
-  page = context.registers[:page]
-  site = context.registers[:site]
-
-  url  = page['url']
-  acronym = page['acronym']
-  
-  number_str = get_number_from_context(context,level)
-  label_str = acronym + "-" + number_str + (envcounter == -1 ? "" : envcounter.to_s)
-  
-  # If the reference anchor is empty
-  if anchor == "math-ref-"
-    # Set a unique anchor from the label string
-    anchor = "math-ref-#{label_str}"
-  end
-
-  equrl = url + "\#" + anchor
-  
-  save_ref(equrl,label_str,anchor,site)
-  return number_str,anchor
-end
 
 def saveRef(url,label,env,key,site)
   # Initialize empty dictionary
@@ -105,38 +82,22 @@ def saveRef(url,label,env,key,site)
   site.config["ref"][key] = {"url"=>url,"label"=>label,"env"=>env}
 end
 
-
-def save_ref(url,label,key,site)
-  # Initialize empty dictionary
-  site.config["ref"] ||= {}
-  ref = site.config["ref"]
-  if ref.key?(key)
-    elabel = ref[key]["label"]
-    eurl = ref[key]["url"]
-
-    # If it is a the same label and url ignore 
-    return if (eurl == url) && (elabel == label)
-    # else return error
-    raise "Key '#{key}' already exists"
-  end
-  site.config["ref"][key] = {"url"=>url,"label"=>label}
-end
-
-def genRef(context,envname,label)
-  envcounter = setupEnv(context,envname)
-  # envcounter = context[envname]["counter"]
+def genRef(context,envname,label,level=nil)
+  # envcounter = setupEnv(context,envname)
+  envcounter = context[envname]["counter"]
   anchor = "math-ref-#{label}"
 
   page = context.registers[:page]
   site = context.registers[:site]
   url  = page['url']
   acronym = page['acronym']
-
-  level = site.config[envname]["countby"]
-
+  
+  if !level
+    level = site.config[envname]["countby"]
+   end
   # Get the number from the section counters
   number_str = get_number_from_context(context,level)
-  label_str = acronym + "-" + number_str + (envcounter == -1 ? "" : envcounter.to_s)
+  label_str = acronym + "-" + number_str + (envcounter.class == Array ? "" : envcounter.to_s)
   # If the reference anchor is empty
   if anchor == "math-ref-"
     # Set a unique anchor from the label string
@@ -146,7 +107,34 @@ def genRef(context,envname,label)
   equrl = url + "\#" + anchor
   
   saveRef(equrl,label_str,envname,anchor,site)
+
   return label_str,equrl,number_str,anchor
+end
+
+def setupEnv(context,envname)
+  site = context.registers[:site]
+ 
+  # Config for env
+  site.config[envname] ||= {} 
+  site.config[envname]["countby"] ||= 0
+
+  # Counter for env  
+  context[envname] ||= {}
+  context[envname]["counter"] ||= 1
+end
+
+def setupSectionEnv(context,level,envname)
+  site = context.registers[:site]
+  page = context.registers[:page]
+
+  context[envname] ||= {}
+  context[envname]["withacronym"] ||= page["#{envname}_with_acronym"] || false
+  # Create counter for each section level
+  context[envname]["counter"] ||= Array.new
+  # Initialize counter if empty
+  context[envname]["counter"][level] ||= 0
+  # increment counter
+  context[envname]["counter"][level] += 1
 end
 
 
@@ -156,16 +144,10 @@ def get_url_label_from_config(context,key)
   return site.config["ref"][key]["url"],site.config["ref"][key]["label"]
 end
 
-# Get reference from site. Raise error if key not found
-def getRef(site,key)
-  if (site.config["ref"] == nil) || site.config["ref"][key] == nil
-    raise "Key '#{key}' not found!"
-  end
-  return site.config["ref"][key]["url"],site.config["ref"][key]["label"]
-end
+
 
 # Get reference from site. Raise error if key not found
-def getRefRef(ref,key)
+def getRef(ref,key)
   if (ref == nil) || ref[key] == nil
     raise "Key '#{key}' not found!"
   end
@@ -247,8 +229,10 @@ module Jekyll
       # anchor = "math-ref-#{@label}"
       
       # envcounter = setupEnv(context,@envname)
-
+      setupEnv(context,@envname)
       label_str,equrl,number_str,anchor = genRef(context,@envname,@label)
+      # increment env counter 
+      context[@envname]["counter"] += 1
         
       id = "#{@envname}#{number_str.gsub('.','_')}" # Define a unique id
 
@@ -318,22 +302,8 @@ module Jekyll
     def render(context)
       
       page = context.registers[:page]
-      site = context.registers[:site]
+      setupSectionEnv(context,@level,"section")
 
-
-      context["section"] ||= {}
-
-      context["section"]["withacronym"] ||= page["section_with_acronym"] || false
-      
-      # Create counter for each section level
-      context["section"]["counter"] ||= Array.new
-      
-      # Initialize counter if empty
-      context["section"]["counter"][@level] ||= 0
-      
-      # increment counter
-      context["section"]["counter"][@level] += 1
-      
       # Iterate over envs
       if context["envs"] != nil 
         context["envs"].each do |env|
@@ -343,8 +313,8 @@ module Jekyll
           end
         end
       end
-      
-      number_str,anchor = gen_and_save_ref(context,@level,-1,"math-ref-#{@ref}")
+
+      label_str,equrl,number_str,anchor = genRef(context,"section",@ref,level=@level)
       
       acronym = ""
       if context["section"]["withacronym"]
@@ -436,22 +406,6 @@ module Jekyll
   end
 end
 
-def setupEnv(context,envname)
-  site = context.registers[:site]
- 
-  # Config for env
-  site.config[envname] ||= {} 
-  site.config[envname]["countby"] ||= 0
-
-  # Counter for env  
-  context[envname] ||= {}
-  context[envname]["counter"] ||= 1
-  envcounter = context[envname]["counter"]
-  # increment proof counter to generate unique id
-  context[envname]["counter"] += 1
-  return envcounter
-end
-
 
 module Jekyll
   class EnvProof < Liquid::Block
@@ -479,7 +433,7 @@ module Jekyll
       
       # envcounter = setupEnv(context,"proof")
       # anchor = "math-ref-#{@label}"
-      
+      setupEnv(context,"proof")
       label_str,equrl,number_str,anchor = genRef(context,"proof","#{@label}:proof")
       content = super 
 
@@ -506,10 +460,9 @@ module Jekyll
       positional, named = parse_params(markup)
 
       @envname = named['envname'] || positional[0]
-      @label = named['label'] || positional[1]
-      @countby = named['countby'] || positional[2] || 0
-      @proofname = named['proofname'] || positional[3] || 'proof'         
-      # Give error if @label or @envname are nil or empty 
+      @countby = named['countby'] || positional[1] || 0
+      @proofname = named['proofname'] || positional[2] || 'proof'         
+      # Give error if @envname are nil or empty 
     end
 
     def render(context)
@@ -556,8 +509,8 @@ module Jekyll
     def render(context)
       
       # Count equations by section by default
-      context["equation"] ||= {}
-      context["equation"]["countby"] ||= 0
+      # context["equation"] ||= {}
+      # context["equation"]["countby"] ||= 0
       
       # # Generate and save the url and label in the context
       # anchor = gen_and_save_ref_II(context,"equation",@label)
@@ -567,6 +520,7 @@ module Jekyll
 
       # anchor = "math-ref-#{@label}"
 
+      setupEnv(context,"equation")
       label_str,equrl,number_str,anchor = genRef(context,"equation",@label)
 
       label_str_p = "(#{label_str})"
@@ -628,6 +582,79 @@ Liquid::Template.register_tag('envcreate', Jekyll::EnvCreate)
 Liquid::Template.register_tag('envoptions', Jekyll::EnvOptions)
 Liquid::Template.register_tag('equation', Jekyll::EquationLabel)
 Liquid::Template.register_tag('repeat', Jekyll::Repeat)
+
+
+
+
+def generate_sidenav(site)
+  sidenav_items = site.posts.docs
+    .reject { |post| post.data['title'] == 'Fetch' || post.data['title'] == 'Scroll' }
+    .map do |post|
+      <<~HTML
+        <button class="dropdown-btn" onclick="fetchElements('#{post.url}',this)">
+          #{post.data['title']}
+          <span class="fa-caret-down">▼</span>
+        </button>
+        <div class="dropdown-container"></div>
+      HTML
+    end.join("\n")
+  
+  <<~HTML
+    <div class="sidenav" id="sidenav">
+      #{sidenav_items}
+    </div>
+  HTML
+end
+
+module Jekyll
+  class HtmlPage < Page
+    def initialize(site, base, name, content)
+      @site = site
+      @base = base
+      @dir = name
+      @name = 'index.html'
+      
+      self.process(@name)
+      
+      self.data = {
+        'layout' => 'default',
+        'title' => name.capitalize,
+        'permalink' => "/#{name}/"
+      }
+      
+      @content = content
+    end
+    
+    def read_yaml(*)
+      # Override to prevent reading from filesystem
+    end
+  end
+
+  class MultipleHtmlPostsGenerator < Generator
+    safe true
+    priority :high
+
+    def generate(site)
+      plugin_dir = File.expand_path("extra/posts", __dir__)
+      site.static_files << Jekyll::StaticFile.new(site,plugin_dir,'','my-page.html')
+      # addExtraPosts(site)      
+    end
+  end
+end
+
+def addExtraPosts(site)
+  baseurl = site.config['baseurl']
+
+  extra_posts_dir = File.expand_path("extra/posts", __dir__)
+  Dir.glob(File.join(extra_posts_dir, "*.html")).each do |html_file|
+    html = File.read(html_file)
+    html.sub!(/<div class="sidenav" id="sidenav">(.*?)<\/div>/m,generate_sidenav(site))
+    html.sub!(/<startPage>/m,baseurl)
+    basename = File.basename(html_file, '.html')
+    page = Jekyll::HtmlPage.new(site, site.source, basename, html)
+    site.pages << page
+  end
+end
 
 def pre_render_acronyms(site)
   puts "Executing pre render hook for acronyms"
@@ -707,7 +734,7 @@ def proofCheck(ref,key)
   if key.end_with?(":proof")
     keyenv = key[0..-7]
     if ref.key?(keyenv)
-      equrl,label,env = getRefRef(ref,keyenv)
+      equrl,label,env = getRef(ref,keyenv)
       return equrl,label,env
     end
   end
@@ -725,7 +752,7 @@ def linkProof(site,key)
   envurl,label,env = proofCheck(ref,key)
   return nil if envurl == nil
   
-  proofurl,_,_ = getRefRef(ref,key)
+  proofurl,_,_ = getRef(ref,key)
   proofname = site.config[env]['proofname']
   refProof(proofurl,envurl,label,proofname,env)
 end
@@ -788,7 +815,7 @@ def getEnvRef(ref,anchor)
   if anchor.end_with?(":proof")
     keyenv = anchor[0..-7]
     if ref.key?(keyenv)
-      getRefRef(ref,keyenv)
+      getRef(ref,keyenv)
     else 
       raise "Proof with anchor #{anchor} does not have env!"
     end
@@ -807,7 +834,7 @@ def generateProof(post,site)
     
     # Get the ref of the proof and the corresponding env
     envurl,envlabel,envname = getEnvRef(ref,anchor)
-    proofurl,prooflabel,proofname = getRefRef(ref,anchor)
+    proofurl,prooflabel,proofname = getRef(ref,anchor)
 
     proofname = site.config[envname]['proofname']
     proof_ref_html = refProof(proofurl,envurl,envlabel,proofname,envname)
@@ -816,13 +843,13 @@ def generateProof(post,site)
         
     # The content with a toggle button inside
     <<~HTML
-    <div class="#{envname}-box" id="#{anchor}">
+    <div class="#{envname}-box user-#{@envname}-box" id="#{anchor}">
     <div class='box'>
-      <div class="header">
+      <div class="header user-header">
       #{proof_ref_html}
       </div>
-      <button class="hide-button" onclick="toggleContent#{id}()"></button>
-      <div class="content">
+      <button class="hide-button user-hide-button" onclick="toggleContent#{id}()"></button>
+      <div class="content user-content">
           #{content}
       </div>
       </div>
@@ -830,7 +857,7 @@ def generateProof(post,site)
 
     <script>
       function toggleContent#{id}() {
-          const content = document.getElementById('#{anchor}:proof');
+          const content = document.getElementById('#{anchor}');
           content.style.display = 'none';
       }
     </script>
@@ -872,6 +899,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       injectAtEndBody(post,extra_content)
     end
   end
+  addExtraPosts(site)
 end
 
 

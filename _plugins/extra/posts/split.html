@@ -1,6 +1,3 @@
----
----
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,7 +34,7 @@ numberSplits = params.get('split');
 if(numberSplits === null) numberSplits = 2;
 console.log(numberSplits);
 
-const StartPage = "{% link index.markdown %}";
+const StartPage = <startPage>;
 const iframesList = []
 let listener = null;
 let loaded = new Array(numberSplits).fill(false);
