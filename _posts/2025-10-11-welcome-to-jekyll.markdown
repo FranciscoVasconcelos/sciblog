@@ -38,7 +38,7 @@ some other equation with a new tag
 \pi = \sum_k \frac{\pi_k^{\theta_k}}{\rho_k}
 {% endequation %}
 
-{% envproof lemma lemma:this:theorem %}
+{% envproof lemma:this:theorem %}
 This is a proof for the lemma 
 
 

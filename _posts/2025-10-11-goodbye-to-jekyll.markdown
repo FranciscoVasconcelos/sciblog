@@ -74,7 +74,7 @@ $$
 {% ref def:this:coco %}
 
 
-{% envproof theorem theo:this:theorem %}
+{% envproof theo:this:theorem %}
 This is a crappy proof of the theorem. Use $\eqref{the:coco:eq}$ to show that 
 
 {% equation %}
@@ -117,7 +117,7 @@ f(x) = \sum_k a_k x^k
 
 {% endenvlabel %}
 
-{% envproof theorem theo:this:theorem:other %}
+{% envproof theo:this:theorem:other %}
 This is a crappy proof of the theorem. Use $\eqref{the:coco:eq}$ to show that 
 
 {% equation %}

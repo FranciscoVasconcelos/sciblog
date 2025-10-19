@@ -89,21 +89,6 @@ def gen_and_save_ref(context,level,envcounter,anchor)
   return number_str,anchor
 end
 
-def gen_and_save_ref_II(context,envname,label)
-  context[envname]["counter"] ||= 1
-  envcounter = context[envname]["counter"]
-  anchor = "math-ref-#{label}"
-  
-  site = context.registers[:site]
-
-
-  # If label is empty or nil autogenerate the anchor
-  _,anchor = gen_and_save_ref(context,site.config[envname]["countby"],envcounter,anchor)
-  return anchor
-  
-end
-
-
 def saveRef(url,label,env,key,site)
   # Initialize empty dictionary
   site.config["ref"] ||= {}
@@ -138,23 +123,20 @@ def save_ref(url,label,key,site)
 end
 
 def genRef(context,envname,label)
-  context[envname]["counter"] ||= 1
-  envcounter = context[envname]["counter"]
+  envcounter = setupEnv(context,envname)
+  # envcounter = context[envname]["counter"]
   anchor = "math-ref-#{label}"
-  
 
   page = context.registers[:page]
   site = context.registers[:site]
+  url  = page['url']
+  acronym = page['acronym']
 
   level = site.config[envname]["countby"]
 
-  url  = page['url']
-  acronym = page['acronym']
-  
   # Get the number from the section counters
   number_str = get_number_from_context(context,level)
   label_str = acronym + "-" + number_str + (envcounter == -1 ? "" : envcounter.to_s)
-  
   # If the reference anchor is empty
   if anchor == "math-ref-"
     # Set a unique anchor from the label string
@@ -164,7 +146,7 @@ def genRef(context,envname,label)
   equrl = url + "\#" + anchor
   
   saveRef(equrl,label_str,envname,anchor,site)
-  return label_str,equrl,number_str
+  return label_str,equrl,number_str,anchor
 end
 
 
@@ -262,17 +244,12 @@ module Jekyll
       url  = page['url']
       acronym = page['acronym']
       
-      anchor = "math-ref-#{@label}"
+      # anchor = "math-ref-#{@label}"
       
-      context[@envname]["counter"] ||= 1
-      envcounter = context[@envname]["counter"]
-        
-      # Create a label and an url and save it in the context
-      # number_str = get_number_from_context(context,context[@envname]["countby"])
-      # label_str,equrl = get_url_label(acronym,number_str,envcounter,url,anchor)
-      # save_ref(equrl,label_str,anchor,site)
-      label_str,equrl,number_str = genRef(context,@envname,@label)
+      # envcounter = setupEnv(context,@envname)
 
+      label_str,equrl,number_str,anchor = genRef(context,@envname,@label)
+        
       id = "#{@envname}#{number_str.gsub('.','_')}" # Define a unique id
 
       linkproof = ""
@@ -284,8 +261,6 @@ module Jekyll
         HTML
       end
 
-      # Iterate config 
-      context[@envname]["counter"] += 1
       content = super
           
       # Render any Liquid inside it
@@ -461,6 +436,21 @@ module Jekyll
   end
 end
 
+def setupEnv(context,envname)
+  site = context.registers[:site]
+ 
+  # Config for env
+  site.config[envname] ||= {} 
+  site.config[envname]["countby"] ||= 0
+
+  # Counter for env  
+  context[envname] ||= {}
+  context[envname]["counter"] ||= 1
+  envcounter = context[envname]["counter"]
+  # increment proof counter to generate unique id
+  context[envname]["counter"] += 1
+  return envcounter
+end
 
 
 module Jekyll
@@ -475,8 +465,8 @@ module Jekyll
       
       positional, named = parse_params(markup)
 
-      @envname = named['envname'] || positional[0]
-      @label = named['label'] || positional[1]
+      # @envname = named['envname'] || positional[0]
+      @label = named['label'] || positional[0]
       
       # Give error if @label or @envname are nil or empty 
     end
@@ -486,49 +476,17 @@ module Jekyll
 
       url = page['url']
       acronym = page['acronym']
-
-      # Counter for proof as if it were a normal env
-      context["proof"] = {}
-      context["proof"]["counter"] ||= 1
-      envcounter = context["proof"]["counter"]
-    
-      anchor = "math-ref-#{@label}"
-      envurl = "#{url}\##{anchor}:proof"
-
-      # Create a label and an url and save it in the context
-      number_str = get_number_from_context(context,site.config[@envname]["countby"])
-      label_str,equrl = get_url_label(acronym,number_str,envcounter,url,anchor)
-
-      save_ref(envurl,"here","#{anchor}:proof",site)
-
-      # The pre text for the box title
-      # append_title = %(<a href="#{envurl}" style="color:blue">#{site.config[@envname]['proofname'].capitalize}</a> of)
- 
-      id = "#{@envname}#{label_str.gsub('.','_').gsub('-','_')}_proof" # Define a unique id
-      content = super 
       
-      # #{append_title} #{@envname} <mathlabel>#{anchor}</mathlabel>
+      # envcounter = setupEnv(context,"proof")
+      # anchor = "math-ref-#{@label}"
+      
+      label_str,equrl,number_str,anchor = genRef(context,"proof","#{@label}:proof")
+      content = super 
 
-      # The content with a toggle button inside
       <<~HTML
-      <div class="#{@envname}-box" id="#{anchor}:proof">
-      <div class='box'>
-        <div class="header">
-        <prooflabel>#{anchor}:proof</prooflabel>
-        </div>
-        <button class="hide-button" onclick="toggleContent#{id}()"></button>
-        <div class="content">
-            #{content}
-        </div>
-        </div>
-      </div>
-
-      <script>
-        function toggleContent#{id}() {
-            const content = document.getElementById('#{anchor}:proof');
-            content.style.display = 'none';
-        }
-      </script>
+      <proofenv anchor="#{anchor}">
+      #{content}
+      </proofenv>
       HTML
 
     end
@@ -601,11 +559,15 @@ module Jekyll
       context["equation"] ||= {}
       context["equation"]["countby"] ||= 0
       
-      # Generate and save the url and label in the context
-      anchor = gen_and_save_ref_II(context,"equation",@label)
-      
-      # Get the url and label 
-      equrl,label_str = get_url_label_from_config(context,anchor)
+      # # Generate and save the url and label in the context
+      # anchor = gen_and_save_ref_II(context,"equation",@label)
+      #
+      # # Get the url and label 
+      # equrl,label_str = get_url_label_from_config(context,anchor)
+
+      # anchor = "math-ref-#{@label}"
+
+      label_str,equrl,number_str,anchor = genRef(context,"equation",@label)
 
       label_str_p = "(#{label_str})"
 
@@ -822,6 +784,62 @@ def setReference(post,ref)
   post.output = html
 end
 
+def getEnvRef(ref,anchor)
+  if anchor.end_with?(":proof")
+    keyenv = anchor[0..-7]
+    if ref.key?(keyenv)
+      getRefRef(ref,keyenv)
+    else 
+      raise "Proof with anchor #{anchor} does not have env!"
+    end
+  else
+    raise "Not a proof label"
+  end
+end
+
+def generateProof(post,site)
+  ref = site.config["ref"]
+  html = post.output
+  # Iterate and replace all <proofenv> tags
+  html.gsub!(/<proofenv anchor="([^"]*)">(.*?)<\/proofenv>/m) do |match|
+    anchor = $1      # Captures the anchor value
+    content = $2     # Captures the content between tags
+    
+    # Get the ref of the proof and the corresponding env
+    envurl,envlabel,envname = getEnvRef(ref,anchor)
+    proofurl,prooflabel,proofname = getRefRef(ref,anchor)
+
+    proofname = site.config[envname]['proofname']
+    proof_ref_html = refProof(proofurl,envurl,envlabel,proofname,envname)
+
+    id = "proof#{prooflabel.gsub('.','_').gsub('-','_')}"
+        
+    # The content with a toggle button inside
+    <<~HTML
+    <div class="#{envname}-box" id="#{anchor}">
+    <div class='box'>
+      <div class="header">
+      #{proof_ref_html}
+      </div>
+      <button class="hide-button" onclick="toggleContent#{id}()"></button>
+      <div class="content">
+          #{content}
+      </div>
+      </div>
+    </div>
+
+    <script>
+      function toggleContent#{id}() {
+          const content = document.getElementById('#{anchor}:proof');
+          content.style.display = 'none';
+      }
+    </script>
+    HTML
+  end
+end
+
+
+
 def getContentExtra()
   plugin_dir = File.expand_path("extra", __dir__)
   
@@ -849,6 +867,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       setRepeat(post,ref)
       setReference(post,ref)
       setProof(post,site)
+      generateProof(post,site)
       injectAtEndBody(post,js_content)
       injectAtEndBody(post,extra_content)
     end
