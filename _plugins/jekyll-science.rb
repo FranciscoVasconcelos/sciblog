@@ -585,7 +585,6 @@ Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 
 
 
-
 def generate_sidenav(site)
   sidenav_items = site.posts.docs
     .reject { |post| post.data['title'] == 'Fetch' || post.data['title'] == 'Scroll' }
@@ -606,53 +605,64 @@ def generate_sidenav(site)
   HTML
 end
 
-module Jekyll
-  class HtmlPage < Page
-    def initialize(site, base, name, content)
-      @site = site
-      @base = base
-      @dir = name
-      @name = 'index.html'
-      
-      self.process(@name)
-      
-      self.data = {
-        'layout' => 'default',
-        'title' => name.capitalize,
-        'permalink' => "/#{name}/"
-      }
-      
-      @content = content
-    end
-    
-    def read_yaml(*)
-      # Override to prevent reading from filesystem
-    end
-  end
-
-  class MultipleHtmlPostsGenerator < Generator
+module ExtraPages
+  class  ExtraPagesGenerator < Jekyll::Generator
     safe true
-    priority :high
 
     def generate(site)
-      plugin_dir = File.expand_path("extra/posts", __dir__)
-      site.static_files << Jekyll::StaticFile.new(site,plugin_dir,'','my-page.html')
-      # addExtraPosts(site)      
+      baseurl = site.config['baseurl']
+      puts "generating ...."
+      puts baseurl
+      baseurl = '/'
+      js_content  = appendPostsUrlVar(site,"repeat.js")
+      extra_content = getContentExtra()
+      extra_posts_dir = File.expand_path("extra/posts", __dir__)
+      Dir.glob(File.join(extra_posts_dir, "*.html")).each do |html_file|
+        html = File.read(html_file)
+        html.sub!(/<div class="sidenav" id="sidenav">(.*?)<\/div>/m,generate_sidenav(site))
+        html.sub!(/<startPage>/m,"'#{baseurl}'")
+
+        html.sub!(/<\/body>/, "#{extra_content}</body>")
+        html.sub!(/<\/body>/, "#{js_content}</body>")
+        basename = File.basename(html_file, '.html')
+        page = CategoryPage.new(site, basename, html)
+        site.pages << page
+      end
     end
   end
-end
 
-def addExtraPosts(site)
-  baseurl = site.config['baseurl']
+  # Subclass of `Jekyll::Page` with custom method definitions.
+  class CategoryPage < Jekyll::Page
+    def initialize(site, basename, content)
+      @site = site             # the current site instance.
+      @base = site.source      # path to the source directory.
+      @dir  = basename        # the directory the page will reside in.
 
-  extra_posts_dir = File.expand_path("extra/posts", __dir__)
-  Dir.glob(File.join(extra_posts_dir, "*.html")).each do |html_file|
-    html = File.read(html_file)
-    html.sub!(/<div class="sidenav" id="sidenav">(.*?)<\/div>/m,generate_sidenav(site))
-    html.sub!(/<startPage>/m,baseurl)
-    basename = File.basename(html_file, '.html')
-    page = Jekyll::HtmlPage.new(site, site.source, basename, html)
-    site.pages << page
+      # All pages have the same filename, so define attributes straight away.
+      @basename = 'index'      # filename without the extension.
+      @ext      = '.html'      # the extension.
+      @name     = 'index.html' # basically @basename + @ext.
+
+      # Initialize data hash with a key pointing to all posts under current category.
+      # This allows accessing the list in a template via `page.linked_docs`.
+      
+      @content = content
+      @data = {
+        'layout' => nil,
+        'title' => 'Raw HTML Post',
+      }
+
+    end
+
+    # Placeholders that are used in constructing page URL.
+    def url_placeholders
+      {
+        :path       => @dir,
+        :category   => @dir,
+        :basename   => basename,
+        :output_ext => output_ext,
+      }
+    end
   end
 end
 
@@ -887,7 +897,6 @@ Jekyll::Hooks.register :site, :post_render do |site|
   js_content  = appendPostsUrlVar(site,"repeat.js")
   extra_content = getContentExtra()
   ref = site.config['ref']
-  # inject_script(site,"repeat.js")
   # Iterate over all posts
   site.posts.docs.each do |post|
     if post.output_ext == ".html"
@@ -899,7 +908,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       injectAtEndBody(post,extra_content)
     end
   end
-  addExtraPosts(site)
 end
+
 
 
