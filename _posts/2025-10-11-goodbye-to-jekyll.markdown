@@ -131,4 +131,6 @@ And if I add <a href="www.fuck.com">this</a>
 {% repeat eq:pi:3 %}
 
 
+{% proofref theo:this:theorem %}
+
 <prooflabel> math-ref-theo:this:theorem:proof</prooflabel>

@@ -7,7 +7,6 @@ acronym: P
 ---
 
 
-{% envcreate lemma 1 %}
 
 {% ref sec:here %}
 

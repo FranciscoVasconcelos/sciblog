@@ -447,6 +447,102 @@ module Jekyll
   end
 end
 
+module Jekyll
+  class ProofRef < Liquid::Tag
+    def initialize(tag_name, markup, tokens)
+      super
+
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+
+      # @envname = named['envname'] || positional[0]
+      @label = named['label'] || positional[0]
+      
+      # Give error if @label id nil or empty 
+    end
+
+    def render(context)
+      
+      <<~HTML
+      <prooflabel>
+      math-ref-#{@label}:proof
+      </prooflabel>
+      HTML
+
+    end
+  end
+end
+
+module Jekyll
+  class EquationLabel < Liquid::Block
+    def initialize(tag_name, markup, tokens)
+      super
+      
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+
+      @label = named['label'] || positional[0]
+      # Give error if @label is nil or empty 
+    end
+    def render(context)
+    
+      setupEnv(context,"equation")
+      label_str,equrl,number_str,anchor = genRef(context,"equation",@label)
+
+      label_str_p = "(#{label_str})"
+
+      context["equation"]["counter"] += 1
+      content = super
+      
+      <<~HTML
+      <div id="#{anchor}" style="display:flex; align-items:center; justify-content:space-between; gap:1em;">
+      <div class="mathjax-eq">$$#{content}\\notag$$</div>
+      <a href="#{equrl}" style="color:green;">#{label_str_p}</a>
+      </div>
+      HTML
+
+    end
+  end
+end
+
+
+Liquid::Template.register_tag('section',Jekyll::Sectioning)
+Liquid::Template.register_tag('envlabel', Jekyll::EnvLabel)
+Liquid::Template.register_tag('ref',Jekyll::Reference)
+Liquid::Template.register_tag('envproof', Jekyll::EnvProof)
+Liquid::Template.register_tag('equation', Jekyll::EquationLabel)
+Liquid::Template.register_tag('repeat', Jekyll::Repeat)
+Liquid::Template.register_tag('proofref', Jekyll::ProofRef)
+
+def generate_sidenav(site)
+  sidenav_items = site.posts.docs
+    .reject { |post| post.data['title'] == 'Fetch' || post.data['title'] == 'Scroll' }
+    .map do |post|
+      <<~HTML
+        <button class="dropdown-btn" onclick="fetchElements('#{post.url}',this)">
+          #{post.data['title']}
+          <span class="fa-caret-down">▼</span>
+        </button>
+        <div class="dropdown-container"></div>
+      HTML
+    end.join("\n")
+  
+  <<~HTML
+    <div class="sidenav" id="sidenav">
+      #{sidenav_items}
+    </div>
+  HTML
+end
+
+
 def AppendAllEnvStyles(site,post)
   envs = site.config["sciblog"]["envs"]
   content = envs.map do |key, value|
@@ -487,151 +583,7 @@ def addEnvs(site)
   createEnvs(site,site.config["sciblog"]["envs"])
 end
 
-module Jekyll
-  class EnvCreate < Liquid::Tag
-    def initialize(tag_name, markup, tokens)
-      super
 
-      unless valid_param_order?(markup)
-        raise SyntaxError, 
-          "Positional arguments must come before named arguments"
-      end
-      
-      positional, named = parse_params(markup)
-
-      @envname = named['envname'] || positional[0]
-      @countby = named['countby'] || positional[1] || 0
-      @proofname = named['proofname'] || positional[2] || 'proof'         
-      # Give error if @envname are nil or empty 
-    end
-
-    def render(context)
-      envdict = {}
-      envdict["countby"] = @countby.to_i
-      envdict["proofname"] = @proofname
-
-      site = context.registers[:site]
-
-      # Add the enviornment name to the context
-      site.config[@envname] = envdict
-      context[@envname] ||= {} 
-
-      # Add the env name to the list of envs
-      site.config['envs'] ||= []
-      site.config['envs'] << @envname
-      
-      # Add the default style 
-      content = "<style>"
-      content += load_replace('_plugins/extra/default.css',".#{@envname}-box")
-      content += "</style>"
-
-      return content
-      end
-
-  end
-end
-
-module Jekyll
-  class EquationLabel < Liquid::Block
-    def initialize(tag_name, markup, tokens)
-      super
-      
-      unless valid_param_order?(markup)
-        raise SyntaxError, 
-          "Positional arguments must come before named arguments"
-      end
-      
-      positional, named = parse_params(markup)
-
-      @label = named['label'] || positional[0]
-      # Give error if @label is nil or empty 
-    end
-    def render(context)
-    
-      setupEnv(context,"equation")
-      label_str,equrl,number_str,anchor = genRef(context,"equation",@label)
-
-      label_str_p = "(#{label_str})"
-
-      context["equation"]["counter"] += 1
-      content = super
-      
-      <<~HTML
-      <div id="#{anchor}" style="display:flex; align-items:center; justify-content:space-between; gap:1em;">
-      <div class="mathjax-eq">$$#{content}\\notag$$</div>
-      <a href="#{equrl}" style="color:green;">#{label_str_p}</a>
-      </div>
-      HTML
-
-    end
-  end
-end
-
-module Jekyll
-  class EnvOptions < Liquid::Tag
-    def initialize(tag_name, markup, tokens)
-      super
-
-      unless valid_param_order?(markup)
-        raise SyntaxError, 
-          "Positional arguments must come before named arguments"
-      end
-      
-      positional, named = parse_params(markup)
-
-      @envname = named['envname'] || positional[0]
-      @countby = named['countby'] || positional[1] || 0
-      @proofname = named['proofname'] || positional[2]
-      # Give error if @envname is nil or empty 
-
-    end
-
-    def render(context)
-      site = context.registers[:site]
-      context[@envname] ||= {}
-      site.config[@envname] ||= {}
-      site.config[@envname]["countby"] = (@countby || 0).to_i
-      if !@proofname 
-        site.config[@envname]["proofname"] = @proofname
-      end
-      super
-    end
-  end
-end
-
-
-
-
-Liquid::Template.register_tag('section',Jekyll::Sectioning)
-Liquid::Template.register_tag('envlabel', Jekyll::EnvLabel)
-Liquid::Template.register_tag('ref',Jekyll::Reference)
-Liquid::Template.register_tag('envproof', Jekyll::EnvProof)
-Liquid::Template.register_tag('envcreate', Jekyll::EnvCreate)
-Liquid::Template.register_tag('envoptions', Jekyll::EnvOptions)
-Liquid::Template.register_tag('equation', Jekyll::EquationLabel)
-Liquid::Template.register_tag('repeat', Jekyll::Repeat)
-
-
-
-def generate_sidenav(site)
-  sidenav_items = site.posts.docs
-    .reject { |post| post.data['title'] == 'Fetch' || post.data['title'] == 'Scroll' }
-    .map do |post|
-      <<~HTML
-        <button class="dropdown-btn" onclick="fetchElements('#{post.url}',this)">
-          #{post.data['title']}
-          <span class="fa-caret-down">▼</span>
-        </button>
-        <div class="dropdown-container"></div>
-      HTML
-    end.join("\n")
-  
-  <<~HTML
-    <div class="sidenav" id="sidenav">
-      #{sidenav_items}
-    </div>
-  HTML
-end
 
 module ExtraPages
   class  ExtraPagesGenerator < Jekyll::Generator
@@ -732,28 +684,7 @@ def appendPostsUrlVar(site,filename)
 
 end
 
-def inject_script(site,filename)
-  # Build the posts links array
-  posts_links = site.posts.docs.map { |post| post.url }.to_json
-  
-  # Read your main JavaScript file
-  plugin_dir = File.expand_path("extra", __dir__)
-  js_content = File.read(File.join(plugin_dir, filename))
-  
-  # Create the complete script with posts data
-  complete_script = <<~JS
-    const postsLinks = #{posts_links};
-    
-    #{js_content}
-  JS
-   
-  # Inject into all HTML posts
-  site.posts.docs.each do |post|
-    if post.output_ext == ".html"
-      post.output.sub!(/<\/body>/, "<script>#{complete_script}</script></body>")
-    end
-  end
-end
+
 
 def injectAtEndBody(post,content)
   if post.output_ext == ".html"
@@ -957,11 +888,6 @@ module Jekyll
       generated_pages = page.site.config['_generated_pages']
       
       next if page.data["title"] == "Fetch" || page.data["title"] == "Split" 
-
-
-      puts page.data["title"]
-      puts generated_pages
-
 
       if generated_pages && generated_pages.any?
         page_list_html = generate_page_list_html(generated_pages)

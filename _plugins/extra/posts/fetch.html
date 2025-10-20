@@ -165,21 +165,22 @@
       if (elements.length === 0) {
           console.log(`No elements found with class "${className}"`, 'info');
       } else {
-          displayElements(elements, className);
+          displayElements(elements, className,iframeDoc);
       }
     }
 
-    function displayElements(elements, className) {
-
-        const elementsList = document.getElementById('elementsList');
+    function displayElements(elements, className,iframeDoc) {
+         const elementsList = document.getElementById('elementsList');
 
         // Inject CSS at the beginning 
         extractAndInjectCSS(hiddenIframe);
 
-        for (let i = 0; i < elements.length; i++) {               
-            const content = document.createElement('div');
-            content.innerHTML = elements[i].outerHTML;
-            elementsList.appendChild(content);
+        for (let i = 0; i < elements.length; i++){
+          id = elements[i].id
+          if(id.endsWith(":proof")) continue;
+          elem = iframeDoc.getElementById(`${id}:proof`);
+          elementsList.appendChild(elements[i]);
+          if(elem) elementsList.appendChild(elem);
         }
     }
 
