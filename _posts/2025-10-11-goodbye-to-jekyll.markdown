@@ -9,15 +9,6 @@ section_with_acronym: true
 
 
 
-{% envoptions equation 1 %}
-
-<!-- Create theorem env labeled by section 
-This add the css files -->
-{% envcreate theorem 0 solution %}
-
-<!-- Create definition env labeled by subsection -->
-{% envcreate definition 1 %}
-
 
 
 

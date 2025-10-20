@@ -447,6 +447,46 @@ module Jekyll
   end
 end
 
+def AppendAllEnvStyles(site,post)
+  envs = site.config["sciblog"]["envs"]
+  content = envs.map do |key, value|
+    # Add the default style 
+    load_replace('_plugins/extra/default.css',".#{key}-box")
+  end.join("\n")
+  html = post.output
+  html.sub!(/<\/body>/,"<style>#{content}</style></body>")
+end
+
+def createEnv(site,dict,name)
+  # This must be executed after_init or pre_render
+  countby = dict["countby"]
+  proofname = dict["proofname"]
+  level = count_sub_prefixes(countby)
+  
+  level = 0 if !countby or !level
+  proofname = 'proof' if !proofname
+
+  envdict = {}
+  envdict["countby"] = level
+  envdict["proofname"] = proofname
+
+  site.config[name] = envdict
+  site.config['envs'] ||= []
+  site.config['envs'] << name
+end
+
+def createEnvs(site,envs)
+  envs.each do |key, value|
+    createEnv(site,value,key)
+    puts "#{key} => #{value}"
+  end
+end
+
+def addEnvs(site)
+  raise "No environment defined" if !site.config["sciblog"] or !site.config["sciblog"]["envs"]
+  createEnvs(site,site.config["sciblog"]["envs"])
+end
+
 module Jekyll
   class EnvCreate < Liquid::Tag
     def initialize(tag_name, markup, tokens)
@@ -507,19 +547,7 @@ module Jekyll
       # Give error if @label is nil or empty 
     end
     def render(context)
-      
-      # Count equations by section by default
-      # context["equation"] ||= {}
-      # context["equation"]["countby"] ||= 0
-      
-      # # Generate and save the url and label in the context
-      # anchor = gen_and_save_ref_II(context,"equation",@label)
-      #
-      # # Get the url and label 
-      # equrl,label_str = get_url_label_from_config(context,anchor)
-
-      # anchor = "math-ref-#{@label}"
-
+    
       setupEnv(context,"equation")
       label_str,equrl,number_str,anchor = genRef(context,"equation",@label)
 
@@ -610,13 +638,14 @@ module ExtraPages
     safe true
 
     def generate(site)
-      baseurl = site.config['baseurl']
-      puts "generating ...."
-      puts baseurl
-      baseurl = '/'
+      baseurl = site.config['baseurl']+'/'
+      
       js_content  = appendPostsUrlVar(site,"repeat.js")
       extra_content = getContentExtra()
       extra_posts_dir = File.expand_path("extra/posts", __dir__)
+      
+      generated_pages = []
+
       Dir.glob(File.join(extra_posts_dir, "*.html")).each do |html_file|
         html = File.read(html_file)
         html.sub!(/<div class="sidenav" id="sidenav">(.*?)<\/div>/m,generate_sidenav(site))
@@ -625,15 +654,17 @@ module ExtraPages
         html.sub!(/<\/body>/, "#{extra_content}</body>")
         html.sub!(/<\/body>/, "#{js_content}</body>")
         basename = File.basename(html_file, '.html')
-        page = CategoryPage.new(site, basename, html)
+        page = CategoryPage.new(site, basename,html,basename.capitalize)
         site.pages << page
+        generated_pages << { title: basename.gsub('-', ' ').capitalize, url: page.url }
       end
+      site.config['_generated_pages'] = generated_pages
     end
   end
 
   # Subclass of `Jekyll::Page` with custom method definitions.
   class CategoryPage < Jekyll::Page
-    def initialize(site, basename, content)
+    def initialize(site, basename, content,title="RAW")
       @site = site             # the current site instance.
       @base = site.source      # path to the source directory.
       @dir  = basename        # the directory the page will reside in.
@@ -649,7 +680,7 @@ module ExtraPages
       @content = content
       @data = {
         'layout' => nil,
-        'title' => 'Raw HTML Post',
+        'title' => title,
       }
 
     end
@@ -897,6 +928,9 @@ Jekyll::Hooks.register :site, :post_render do |site|
   js_content  = appendPostsUrlVar(site,"repeat.js")
   extra_content = getContentExtra()
   ref = site.config['ref']
+
+  puts site.config['sciblog']
+
   # Iterate over all posts
   site.posts.docs.each do |post|
     if post.output_ext == ".html"
@@ -906,9 +940,50 @@ Jekyll::Hooks.register :site, :post_render do |site|
       generateProof(post,site)
       injectAtEndBody(post,js_content)
       injectAtEndBody(post,extra_content)
+      AppendAllEnvStyles(site,post)
     end
   end
 end
 
+Jekyll::Hooks.register :site, :after_init do |site|
+  # Set variables for all the posts
+  addEnvs(site)
+end
 
+module Jekyll
+  # Inject into index.html after rendering
+  Jekyll::Hooks.register [:pages], :post_render do |page|
+    if page.name == 'index.html' || page.name == 'index.markdown'
+      generated_pages = page.site.config['_generated_pages']
+      
+      next if page.data["title"] == "Fetch" || page.data["title"] == "Split" 
+
+
+      puts page.data["title"]
+      puts generated_pages
+
+
+      if generated_pages && generated_pages.any?
+        page_list_html = generate_page_list_html(generated_pages)
+        
+        # Append to the begining of the post lists
+        page.output.sub!(/<ul class="post-list">/, %(<ul class="post-list">#{page_list_html}))
+      end
+    end
+  end
+  
+  def self.generate_page_list_html(pages)
+    items = pages.map do |p|
+      <<~HTML
+        <li><span class="post-meta">Auto generated post</span>
+        <h3>
+          <a class="post-link" href="#{p[:url]}">
+            #{p[:title]}
+          </a>
+        </h3></li>
+      HTML
+    end.join("\n")
+    
+  end
+end
 
