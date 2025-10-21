@@ -33,6 +33,11 @@ some other equation with a new tag
 
 {% endenvlabel %}
 
+{% align labels="eq:pi:777;eq:theta" %}
+\pi = \sum_k \pi_k^{\theta_k}\\\pi = \sum_k \pi_k^{\theta_k}
+{% endalign %}
+
+
 
 {% section "A section with spaces" level=0 %}
 {% section "Anoter section with spaces" level=0 %}

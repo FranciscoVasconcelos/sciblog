@@ -503,17 +503,68 @@ module Jekyll
       content = super
       
       <<~HTML
-      <div id="#{anchor}" style="display:flex; align-items:center; justify-content:space-between; gap:1em;">
-      <div class="mathjax-eq">$$#{content}\\notag$$</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:1em;">
+      <div id="#{anchor}" class="mathjax-eq">$$#{content}\\notag$$</div>
       <a href="#{equrl}" style="color:green;">#{label_str_p}</a>
       </div>
       HTML
 
     end
   end
+
+  class AlignLabel < Liquid::Block
+    def initialize(tag_name, markup, tokens)
+      super
+      
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+
+      labels = named['labels'] || positional[0]
+      if labels
+        @labels = labels.split(";")
+      else
+        @labels = []
+      end
+    end
+    def render(context)
+    
+      setupEnv(context,"equation")
+      content = super
+      
+      # Split each equation by \\
+      equations = content.split(/\\\\/)
+      
+      html = ""
+      equations.each_with_index do |eq,idx|
+        label_str,equrl,number_str,anchor = genRef(context,"equation",@labels[idx])
+        label_str_p = "(#{label_str})"
+        context["equation"]["counter"] += 1
+
+        html<<
+        <<~HTML
+        <div id="#{anchor}" class="mathjax-eq">$$#{eq}\\notag$$</div>
+        <a href="#{equrl}" style="color:green;">#{label_str_p}</a>
+        HTML
+      end
+      
+      out = 
+      <<~HTML        
+        <div style="display: grid; grid-template-columns: 2fr 1fr; justify-content:space-between; align-items:center; grid-template-rows: 50px 50px;">
+        #{html}
+        </div>
+      HTML
+      puts out
+      return out
+    end
+  end
 end
 
 
+Liquid::Template.register_tag('align',Jekyll::AlignLabel)
 Liquid::Template.register_tag('section',Jekyll::Sectioning)
 Liquid::Template.register_tag('envlabel', Jekyll::EnvLabel)
 Liquid::Template.register_tag('ref',Jekyll::Reference)
