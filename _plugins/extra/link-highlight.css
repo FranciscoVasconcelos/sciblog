@@ -15,8 +15,14 @@ div:target {
 }
 
 
-.tag-link {
-    color: green;
+.single-equation a{
+  color: green;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.single-equation a:hover{
+  color: darkgreen;
 }
 
 .equation-group {

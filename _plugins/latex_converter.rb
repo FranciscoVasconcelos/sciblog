@@ -6,6 +6,121 @@
 
 require 'fileutils'
 
+$section_pattern = /\\(section|subsection|subsubsection|paragraph|subparagraph)\{([^}]+)\}/
+$label_pattern = /\\label\{([^}]+)\}/
+$env_pattern = /\\begin\{(?<name>[a-zA-Z0-9_-]+)\}(?<content>.*?)\\end\{\k<name>\}/m
+$section_levels = {
+  'section' => 1,
+  'subsection' => 2,
+  'subsubsection' => 3,
+  'paragraph' => 4,
+  'subparagraph' => 5
+}
+
+def find_pattern_exclude_bounds(content,bounds,pattern)
+  # Sort bounds by start position
+  bounds.sort_by! { |start, _| start }
+
+  # Create list of allowed ranges
+  allowed_ranges = []
+  prev_end = 0
+
+  bounds.each do |start, finish|
+    allowed_ranges << [prev_end, start] if prev_end < start
+    prev_end = finish
+  end
+
+  # Don't forget the last segment
+  allowed_ranges << [prev_end, content.length] if prev_end < content.length
+
+  matches = []
+
+  # Search in each allowed range
+  allowed_ranges.each do |start, finish|
+    # puts ""
+    # puts start
+    # puts finish
+    # puts content.length
+    segment = content[start...finish]
+    segment.scan(pattern) do
+      match = Regexp.last_match
+      # Adjust index to be relative to original content
+      # absolute_index = start + match.offset(0)[0]
+      # puts "Found match at index #{start+match.offset(0)[0]}: #{match[0]}"
+      matches << match[1]
+    end
+  end
+  return matches
+end
+
+def parse_recursive(content)
+
+  # puts content 
+  bounds = [] # The env bounds to ignore
+  matches = []
+  content.scan($section_pattern) do |match|
+    match_data = Regexp.last_match
+    matches << {
+      text: match_data[0],
+      start: match_data.offset(0)[0],
+      end: match_data.offset(0)[1],
+      type: match[0],
+      header: match[1]
+    }
+  end
+  
+  # Create a copy
+  cleaned_content_out = ""
+
+  tag_head = nil
+  if matches.length > 0
+    matches.each_with_index do |match,idx|
+      # puts "Parsing content #{idx}"
+      if idx < matches.length-1
+        labels, cleaned_content = parse_recursive(content[match[:end]...(matches[idx+1][:start])])
+        bounds << [match[:end],matches[idx+1][:start]]
+      else
+        labels, cleaned_content = parse_recursive(content[match[:end]...])
+        bounds << [match[:end],content.length-1]
+      end
+      tag_head = %({% section level=#{$section_levels[match[:type]]} header=\"#{match[:header]}\" #{labels} %})
+      cleaned_content_out += %(#{tag_head}\n#{cleaned_content})
+      # puts match[1]
+    end
+  else
+    content.scan($env_pattern) do
+      match = Regexp.last_match
+      env_name = match[:name]
+      matched_content = match[:content]
+      bounds << [match.offset(2)[0],match.offset(2)[1]]
+      # puts "Parsing content of #{env_name}"
+      labels, cleaned_content = parse_recursive(matched_content)
+
+      if (env_name == 'align') || (env_name == 'equation')
+        opening_tag = "{% #{env_name} #{labels} %}"
+        closing_tag = "{% end#{env_name} %}"
+      else
+        opening_tag = "{% envlabel #{env_name} #{labels} %}"
+        closing_tag = "{% endenvlabel %}"
+      end
+
+      cleaned_content_out += %(#{opening_tag}\n#{cleaned_content}\n#{closing_tag}\n)
+    end
+  end
+
+  # Find all label matches 
+  labels = find_pattern_exclude_bounds(content,bounds,$label_pattern)
+  tag_part = ""
+  if labels.length > 1 
+    tag_part = %(labels=\"#{labels.join(";")}\")
+  elsif labels.length == 1
+    tag_part = %(label=#{labels[0]})
+  end
+  return tag_part,cleaned_content_out
+  # puts tag_part
+end
+
+
 # Convert LaTeX section commands with labels to Liquid tags
 def convert_sections_to_liquid(content)
   # Define section hierarchy
@@ -164,10 +279,29 @@ def convert_latex_to_liquid(content)
       tag_parts << "labels=\"#{labels_str}\""
     end
     
-    opening_tag = "{% #{tag_parts.join(' ')} %}"
-    closing_tag = "{% end#{env_name} %}"
+    if (env_name == 'align') || (env_name == 'equation')
+      opening_tag = "{% #{tag_parts.join(' ')} %}"
+      closing_tag = "{% end#{env_name} %}"
+    else
+      opening_tag = "{% envlabel #{tag_parts.join(' ')} %}"
+      closing_tag = "{% endenvlabel %}"
+    end
 
     %(#{opening_tag}\n#{cleaned_content}\n#{closing_tag})
+  end
+end
+
+
+def convert_latex_commands(content)
+
+  liquid_commands = {"ref"=>"ref"}
+
+  commands_pattern = /\\(ref)\{([^}]+)\}/
+  content.gsub!(commands_pattern).each do |match|
+    command = $1
+    argument = $2
+    liquid_command = liquid_commands[command]
+    "{% #{liquid_command} #{argument} %}"
   end
 end
 

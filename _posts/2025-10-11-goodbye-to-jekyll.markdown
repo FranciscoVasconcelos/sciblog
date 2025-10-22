@@ -116,12 +116,12 @@ f(x) = \sum_k a_k x^k
 {% envproof theo:this:theorem:other %}
 This is a crappy proof of the theorem. Use $\eqref{the:coco:eq}$ to show that 
 
-{% equation %}
+{% equation subequation=true %}
 B = \sum_\ell \sqrt{\sum_i\sum_j f_i(\frac{a_i}{s_\ell},\beta_j)}^3
 {% endequation %}
 
 some text here. 
-{% equation eq:wtf:2 %}
+{% equation eq:wtf:2 subequation=true %}
 \pi = \sum_k \pi_k^{\theta_k}
 {% endequation %}
 And if I add <a href="www.fuck.com">this</a>
@@ -140,5 +140,7 @@ This is a repeated equation:
 {% proofref theo:this:theorem %}
 
 {% includetex %}
+
+{% ref eq:wtf:2 %}
 
 <!-- <prooflabel> math-ref-theo:this:theorem:proof</prooflabel> -->

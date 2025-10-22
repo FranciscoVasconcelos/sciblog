@@ -82,7 +82,7 @@ def saveRef(url,label,env,key,site)
   site.config["ref"][key] = {"url"=>url,"label"=>label,"env"=>env}
 end
 
-def genRef(context,envname,label,level=nil)
+def genRef(context,envname,label,level=nil,subeq=false)
   # envcounter = setupEnv(context,envname)
   envcounter = context[envname]["counter"]
   anchor = "math-ref-#{label}"
@@ -98,6 +98,10 @@ def genRef(context,envname,label,level=nil)
   # Get the number from the section counters
   number_str = get_number_from_context(context,level)
   label_str = acronym + "-" + number_str + (envcounter.class == Array ? "" : envcounter.to_s)
+  if subeq
+    subcounter = context[envname]["subcounter"]
+    label_str = "#{label_str}#{(subcounter + 'a'.ord).chr}"
+  end
   # If the reference anchor is empty
   if anchor == "math-ref-"
     # Set a unique anchor from the label string
@@ -216,7 +220,7 @@ module Jekyll
 
       @envname = named['envname'] || positional[0]
       @label = named['label'] || positional[1]
-      @proof = (named['showproof'] || positional[2]).downcase == 'true' 
+      @proof = named['showproof'] || positional[2] == 'true' 
 
     end
     def render(context)
@@ -494,16 +498,28 @@ module Jekyll
       positional, named = parse_params(markup)
 
       @label = named['label'] || positional[0]
+      @subequation = (named['subequation'] || positional[1]) == "true"
       # Give error if @label is nil or empty 
     end
     def render(context)
     
       setupEnv(context,"equation")
-      label_str,equrl,number_str,anchor = genRef(context,"equation",@label)
+
+      if @subequation
+        context["equation"]["subcounter"] ||= 0         
+      else 
+        context["equation"]["subcounter"] = 0 
+      end
+
+      label_str,equrl,number_str,anchor = genRef(context,"equation",@label,level=nil,subeq=@subequation)
 
       label_str_p = "(#{label_str})"
 
-      context["equation"]["counter"] += 1
+      if @subequation
+        context["equation"]["subcounter"] += 1
+      else
+        context["equation"]["counter"] += 1
+      end
       content = super
       
       <<~HTML
@@ -612,14 +628,19 @@ module Jekyll
       tex_path = transform_path_to_tex(original_path)
       content = File.read(tex_path, encoding: 'utf-8')
 
-      # First convert sections, then environments
-      converted = convert_sections_to_liquid(content)
-      converted = convert_latex_to_liquid(converted)
+      out = parse_recursive(content)
+      puts out
 
-      # Render any Liquid inside it
-      template = Liquid::Template.parse(converted)
-      rendered = template.render(context)
-      return rendered
+      # First convert sections, then environments
+      # converted = convert_sections_to_liquid(content)
+      # converted = convert_latex_to_liquid(converted)
+      # conterted = convert_latex_commands(converted)
+      #
+      # # Render any Liquid inside it
+      # template = Liquid::Template.parse(converted)
+      # rendered = template.render(context)
+      # return rendered
+      return nil
     end
   end
 end
@@ -686,7 +707,6 @@ end
 def createEnvs(site,envs)
   envs.each do |key, value|
     createEnv(site,value,key)
-    puts "#{key} => #{value}"
   end
 end
 
@@ -971,8 +991,6 @@ Jekyll::Hooks.register :site, :post_render do |site|
   js_content  = appendPostsUrlVar(site,"repeat.js")
   extra_content = getContentExtra()
   ref = site.config['ref']
-
-  puts site.config['sciblog']
 
   # Iterate over all posts
   site.posts.docs.each do |post|
