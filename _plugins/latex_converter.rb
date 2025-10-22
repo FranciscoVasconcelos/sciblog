@@ -110,9 +110,9 @@ def convert_sections_to_liquid(content)
 
     # Build the Liquid tag with named parameters
     if section_label
-      opening_tag = "{% sectioning level=#{section_levels[section[:type]]} title=\"#{section[:title]}\" label=\"#{section_label}\" %}"
+      opening_tag = "{% section level=#{section_levels[section[:type]]} header=\"#{section[:title]}\" label=\"#{section_label}\" %}"
     else
-      opening_tag = "{% sectioning  level=#{section_levels[section[:type]]} title=\"#{section[:title]}\" %}"
+      opening_tag = "{% section  level=#{section_levels[section[:type]]} header=\"#{section[:title]}\" %}"
     end
 
     result << opening_tag
@@ -214,22 +214,4 @@ def process_directory(input_dir, output_dir)
   puts "\n#{success_count}/#{md_files.length} files converted successfully"
 end
 
-# Main execution
-if ARGV.length < 2
-  puts 'Usage:'
-  puts '  Single file: ruby convert_latex_to_liquid.rb input.md output.md'
-  puts '  Directory:   ruby convert_latex_to_liquid.rb input_dir/ output_dir/'
-  exit 1
-end
 
-input_arg = ARGV[0]
-output_arg = ARGV[1]
-
-if File.file?(input_arg)
-  process_file(input_arg, output_arg)
-elsif File.directory?(input_arg)
-  process_directory(input_arg, output_arg)
-else
-  warn "Error: #{input_arg} is not a valid file or directory"
-  exit 1
-end

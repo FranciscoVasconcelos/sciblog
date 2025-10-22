@@ -34,7 +34,7 @@ some other equation with a new tag
 {% endenvlabel %}
 
 {% align labels="eq:pi:777;eq:theta" %}
-\pi = \sum_k \pi_k^{\theta_k}\\\pi = \sum_k \pi_k^{\theta_k}
+\pi = \sum_k \pi_k^{\theta_k}\\\int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}
 {% endalign %}
 
 
@@ -130,12 +130,15 @@ And if I add <a href="www.fuck.com">this</a>
 
 {% ref P-1. %}
 
-
+This is a repeated theorem:
 {% repeat theo:this:theorem %}
 
+This is a repeated equation:
 {% repeat eq:pi:3 %}
 
 
 {% proofref theo:this:theorem %}
 
-<prooflabel> math-ref-theo:this:theorem:proof</prooflabel>
+{% includetex %}
+
+<!-- <prooflabel> math-ref-theo:this:theorem:proof</prooflabel> -->

@@ -435,11 +435,15 @@ module Jekyll
       # anchor = "math-ref-#{@label}"
       setupEnv(context,"proof")
       label_str,equrl,number_str,anchor = genRef(context,"proof","#{@label}:proof")
+    
       content = super 
+      # Render any Liquid inside it
+      template = Liquid::Template.parse(content)
+      rendered = template.render(context)
 
       <<~HTML
       <proofenv anchor="#{anchor}">
-      #{content}
+      #{rendered}
       </proofenv>
       HTML
 
@@ -503,10 +507,16 @@ module Jekyll
       content = super
       
       <<~HTML
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:1em;">
-      <div id="#{anchor}" class="mathjax-eq">$$#{content}\\notag$$</div>
-      <a href="#{equrl}" style="color:green;">#{label_str_p}</a>
-      </div>
+        <div class="equation-group">
+        <div class="single-equation">
+            <div class="math" id="#{anchor}">
+                $$#{content}\\notag$$
+            </div>
+            <div class="tag">
+                <a href="#{equrl}" class="tag-link">#{label_str_p}</a>
+            </div>
+        </div>
+        </div>
       HTML
 
     end
@@ -544,25 +554,75 @@ module Jekyll
         label_str_p = "(#{label_str})"
         context["equation"]["counter"] += 1
 
-        html<<
+        html <<
         <<~HTML
-        <div id="#{anchor}" class="mathjax-eq">$$#{eq}\\notag$$</div>
-        <a href="#{equrl}" style="color:green;">#{label_str_p}</a>
+        <div class="single-equation">
+            <div class="math" id="#{anchor}">
+                $$#{eq}\\notag$$
+            </div>
+            <div class="tag">
+                <a href="#{equrl}" class="tag-link">#{label_str_p}</a>
+            </div>
+        </div>
         HTML
       end
       
-      out = 
-      <<~HTML        
-        <div style="display: grid; grid-template-columns: 2fr 1fr; justify-content:space-between; align-items:center; grid-template-rows: 50px 50px;">
-        #{html}
+      <<~HTML  
+        <div class="equation-group">
+          #{html}
         </div>
       HTML
-      puts out
-      return out
+
     end
   end
 end
 
+
+def transform_path_to_tex(original_path)
+  # Split into directory and filename
+  dir = File.dirname(original_path)   # "_posts/path/to"
+  file = File.basename(original_path, '.*')  # "post" (without .*)
+  
+  # Replace first directory component
+  parts = dir.split('/')
+  parts[0] = parts[0] + '.tex'  
+  new_dir = parts.join('/')
+  
+  # Reconstruct with .tex extension
+  "#{new_dir}/#{file}.tex"
+end
+
+module Jekyll
+  class IncludeTex < Liquid::Tag
+    def initialize(tag_name, markup, tokens)
+      super
+      
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+      location = named["location"]
+          
+    end
+    def render(context)
+      page = context.registers[:page]
+      original_path = page['path']  # "_posts/path/to/post.md"
+      tex_path = transform_path_to_tex(original_path)
+      content = File.read(tex_path, encoding: 'utf-8')
+
+      # First convert sections, then environments
+      converted = convert_sections_to_liquid(content)
+      converted = convert_latex_to_liquid(converted)
+
+      # Render any Liquid inside it
+      template = Liquid::Template.parse(converted)
+      rendered = template.render(context)
+      return rendered
+    end
+  end
+end
 
 Liquid::Template.register_tag('align',Jekyll::AlignLabel)
 Liquid::Template.register_tag('section',Jekyll::Sectioning)
@@ -572,6 +632,7 @@ Liquid::Template.register_tag('envproof', Jekyll::EnvProof)
 Liquid::Template.register_tag('equation', Jekyll::EquationLabel)
 Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 Liquid::Template.register_tag('proofref', Jekyll::ProofRef)
+Liquid::Template.register_tag('includetex', Jekyll::IncludeTex)
 
 def generate_sidenav(site)
   sidenav_items = site.posts.docs
