@@ -37,16 +37,9 @@ def find_pattern_exclude_bounds(content,bounds,pattern)
 
   # Search in each allowed range
   allowed_ranges.each do |start, finish|
-    # puts ""
-    # puts start
-    # puts finish
-    # puts content.length
     segment = content[start...finish]
     segment.scan(pattern) do
       match = Regexp.last_match
-      # Adjust index to be relative to original content
-      # absolute_index = start + match.offset(0)[0]
-      # puts "Found match at index #{start+match.offset(0)[0]}: #{match[0]}"
       matches << match[1]
     end
   end
@@ -55,7 +48,6 @@ end
 
 def parse_recursive(content)
 
-  # puts content 
   bounds = [] # The env bounds to ignore
   matches = []
   content.scan($section_pattern) do |match|
@@ -88,13 +80,22 @@ def parse_recursive(content)
       # puts match[1]
     end
   else
+    matches = []
     content.scan($env_pattern) do
       match = Regexp.last_match
-      env_name = match[:name]
-      matched_content = match[:content]
-      bounds << [match.offset(2)[0],match.offset(2)[1]]
-      # puts "Parsing content of #{env_name}"
-      labels, cleaned_content = parse_recursive(matched_content)
+      matches << {
+        envname: match[:name],
+        cnt: match[:content],
+        idx_cnt_start: match.offset(2)[0],
+        idx_cnt_end: match.offset(2)[1],
+        idx_start: match.offset(0)[0],
+        idx_end: match.offset(0)[1],
+      }
+    end 
+    matches.each_with_index do |match,idx|
+      bounds << [match[:idx_cnt_start],match[:idx_cnt_end]]
+      labels, cleaned_content = parse_recursive(match[:cnt])
+      env_name = match[:envname]
 
       if (env_name == 'align') || (env_name == 'equation')
         opening_tag = "{% #{env_name} #{labels} %}"
@@ -105,7 +106,21 @@ def parse_recursive(content)
       end
 
       cleaned_content_out += %(#{opening_tag}\n#{cleaned_content}\n#{closing_tag}\n)
+
+      # In between content 
+      if idx+1 < matches.length
+        cleaned_content_out += content[match[:idx_end]...(matches[idx+1][:idx_start])]
+      end
     end
+    if matches.length > 0
+      # Add the last segment of content
+      cleaned_content_out += content[(matches[-1][:idx_end])...]
+    end
+  end
+
+  # No environment found
+  if matches.length == 0
+    cleaned_content_out = content
   end
 
   # Find all label matches 
@@ -117,9 +132,15 @@ def parse_recursive(content)
     tag_part = %(label=#{labels[0]})
   end
   return tag_part,cleaned_content_out
-  # puts tag_part
 end
 
+def parse_tex(content)
+  tag_part,content = parse_recursive(content)
+  # Remove all labels from the content
+  content = convert_latex_commands(content)
+  content.gsub!($label_pattern,"")
+  return content
+end
 
 # Convert LaTeX section commands with labels to Liquid tags
 def convert_sections_to_liquid(content)
@@ -303,6 +324,7 @@ def convert_latex_commands(content)
     liquid_command = liquid_commands[command]
     "{% #{liquid_command} #{argument} %}"
   end
+  return content
 end
 
 # Process a single file

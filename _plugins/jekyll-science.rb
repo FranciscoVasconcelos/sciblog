@@ -628,19 +628,13 @@ module Jekyll
       tex_path = transform_path_to_tex(original_path)
       content = File.read(tex_path, encoding: 'utf-8')
 
-      out = parse_recursive(content)
-      puts out
+      converted = parse_tex(content)
 
-      # First convert sections, then environments
-      # converted = convert_sections_to_liquid(content)
-      # converted = convert_latex_to_liquid(converted)
-      # conterted = convert_latex_commands(converted)
-      #
-      # # Render any Liquid inside it
-      # template = Liquid::Template.parse(converted)
-      # rendered = template.render(context)
-      # return rendered
-      return nil
+      # Render any Liquid inside it
+      template = Liquid::Template.parse(converted)
+      rendered = template.render(context)
+      return rendered
+
     end
   end
 end
