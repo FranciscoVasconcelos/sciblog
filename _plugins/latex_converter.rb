@@ -97,7 +97,7 @@ def parse_recursive(content)
       labels, cleaned_content = parse_recursive(match[:cnt])
       env_name = match[:envname]
 
-      if (env_name == 'align') || (env_name == 'equation')
+      if ['align','equation','subequations'].include?(env_name)
         opening_tag = "{% #{env_name} #{labels} %}"
         closing_tag = "{% end#{env_name} %}"
       else

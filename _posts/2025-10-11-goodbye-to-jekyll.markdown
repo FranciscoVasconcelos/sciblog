@@ -116,14 +116,18 @@ f(x) = \sum_k a_k x^k
 {% envproof theo:this:theorem:other %}
 This is a crappy proof of the theorem. Use $\eqref{the:coco:eq}$ to show that 
 
-{% equation subequation=true %}
+{% subequations %}
+
+{% equation %}
 B = \sum_\ell \sqrt{\sum_i\sum_j f_i(\frac{a_i}{s_\ell},\beta_j)}^3
 {% endequation %}
 
 some text here. 
-{% equation eq:wtf:2 subequation=true %}
+{% equation eq:wtf:2 %}
 \pi = \sum_k \pi_k^{\theta_k}
 {% endequation %}
+
+{% endsubequations %}
 And if I add <a href="www.fuck.com">this</a>
 
 {% endenvproof %}

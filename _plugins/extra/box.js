@@ -128,7 +128,7 @@ class HashNavigation {
         container.setAttribute('data-state', 'expanded');
         
         // Show the container
-        container.style.display = 'block';
+        container.style.display = '';
         container.style.visibility = '';
         container.style.height = '';
         container.style.opacity = '';

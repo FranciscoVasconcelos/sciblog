@@ -456,6 +456,31 @@ module Jekyll
 end
 
 module Jekyll
+  class Subequations < Liquid::Block
+    def initialize(tag_name, markup, tokens)
+      super
+
+    end
+    def render(context)   
+
+      context["subequation"] = true
+      context["equation"]["subcounter"] = 0
+
+      content = super 
+      # Render any Liquid inside it
+      template = Liquid::Template.parse(content)
+
+      rendered = template.render(context)
+      context["subequation"] = false
+
+      return rendered
+
+    end
+  end
+end
+
+
+module Jekyll
   class ProofRef < Liquid::Tag
     def initialize(tag_name, markup, tokens)
       super
@@ -498,11 +523,12 @@ module Jekyll
       positional, named = parse_params(markup)
 
       @label = named['label'] || positional[0]
-      @subequation = (named['subequation'] || positional[1]) == "true"
+      # @subequation = (named['subequation'] || positional[1]) == "true"
       # Give error if @label is nil or empty 
     end
     def render(context)
-    
+      
+      @subequation = context["subequation"]
       setupEnv(context,"equation")
 
       if @subequation
@@ -557,8 +583,17 @@ module Jekyll
       end
     end
     def render(context)
-    
+      
+      @subequation = context["subequation"]
+
       setupEnv(context,"equation")
+
+      if @subequation
+        context["equation"]["subcounter"] ||= 0         
+      else 
+        context["equation"]["subcounter"] = 0 
+      end
+
       content = super
       
       # Split each equation by \\
@@ -566,9 +601,13 @@ module Jekyll
       
       html = ""
       equations.each_with_index do |eq,idx|
-        label_str,equrl,number_str,anchor = genRef(context,"equation",@labels[idx])
+        label_str,equrl,number_str,anchor = genRef(context,"equation",@labels[idx],level=nil,subeq=@subequation)
         label_str_p = "(#{label_str})"
-        context["equation"]["counter"] += 1
+        if @subequation
+          context["equation"]["subcounter"] += 1
+        else
+          context["equation"]["counter"] += 1
+        end
 
         html <<
         <<~HTML
@@ -640,6 +679,7 @@ module Jekyll
 end
 
 Liquid::Template.register_tag('align',Jekyll::AlignLabel)
+Liquid::Template.register_tag('subequations',Jekyll::Subequations)
 Liquid::Template.register_tag('section',Jekyll::Sectioning)
 Liquid::Template.register_tag('envlabel', Jekyll::EnvLabel)
 Liquid::Template.register_tag('ref',Jekyll::Reference)
