@@ -554,6 +554,7 @@ module Jekyll
             <div class="math" id="#{anchor}">
                 $$#{content}\\notag$$
             </div>
+            <div class='ocupa'></div>
             <div class="tag">
                 <a href="#{equrl}" class="tag-link">#{label_str_p}</a>
             </div>
@@ -615,6 +616,7 @@ module Jekyll
             <div class="math" id="#{anchor}">
                 $$#{eq}\\notag$$
             </div>
+            <div class='ocupa'></div>
             <div class="tag">
                 <a href="#{equrl}" class="tag-link">#{label_str_p}</a>
             </div>
@@ -705,15 +707,15 @@ module Jekyll
         for i in 0...@ncols
           if idx < refDict.length
             html << %(<div class="math" id="#{refDict[idx][:anchor]}">$$#{refDict[idx][:equation]}\\notag$$</div>)
+            html << "<div class='ocupa'></div>"
             j += 1
             idx += 1
           end
         end
-    
+        
         idx -= j
         
         # Add the tags in a row
-        # puts "something happens before"
         html << "<div class='tag'>("
         for i in 0...j
           # puts idx

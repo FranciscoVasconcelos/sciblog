@@ -38,16 +38,24 @@ div:target {
 /* Alternative: Individual equation styling */
 .single-equation {
     display: flex;
+    width: 100%;
     align-items: center;
     gap: 0px;
     padding: 0px 0;
     margin: -35px 0;
 }
 
-.single-equation .math {
-    flex: 1;
+/* .single-equation   */
+.math {
+    flex: 0 0 auto;
 }
 
-.single-equation .tag {
+/* .single-equation  */
+.tag {
     flex-shrink: 0;
+}
+
+.ocupa {
+    flex: 1 1 auto;  /* consumes all remaining space */
+    background: black; /* optional */
 }
