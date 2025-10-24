@@ -630,6 +630,109 @@ module Jekyll
 
     end
   end
+
+  class GridEquations < Liquid::Block
+    def initialize(tag_name, markup, tokens)
+      super
+      
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+
+      labels = named['labels'] || positional[0]
+      @ncols = (named['ncols'] || positional[1]).to_i # Number of columns
+      # puts "@ncols"
+      # puts @ncols
+      @ncols = 1 if @ncols == 0 || @ncols == nil
+      if labels
+        @labels = labels.split(";")
+      else
+        @labels = []
+      end
+      @rowsubequations = true # Each row is a subequation
+    end
+    def render(context)
+      
+      setupEnv(context,"equation")
+
+      if @rowsubequations
+        context["equation"]["subcounter"] = 0        
+        @subequation = true
+      end
+
+      content = super
+      
+      # Split each equation by \\
+      equations = content.split(/\\\\/)
+      
+      # Get all the references
+      refDict = []
+      col = 0 # The index of column
+      equations.each_with_index do |eq,idx|
+        if col >= @ncols 
+          col = 0  # Reset the column counter
+          if @rowsubequations 
+            # Reset the subcounter
+            context["equation"]["subcounter"] = 0
+            context["equation"]["counter"] += 1 # increment the main counter
+          end
+        end
+        label_str,equrl,number_str,anchor = genRef(context,"equation",@labels[idx],level=nil,subeq=@subequation)
+        refDict << { 
+          label: label_str,
+          url: equrl,
+          number: number_str,
+          anchor: anchor,
+          equation: eq
+        }
+        if @rowsubequations
+          context["equation"]["subcounter"] += 1
+        else
+          context["equation"]["counter"] += 1
+        end
+        col += 1
+      end
+      
+      idx = 0
+      html = ""
+      while idx < refDict.length
+        html << "<div class='single-equation'>"
+        # Add all the equations in a row
+        j = 0
+        for i in 0...@ncols
+          if idx < refDict.length
+            html << %(<div class="math" id="#{refDict[idx][:anchor]}">$$#{refDict[idx][:equation]}\\notag$$</div>)
+            j += 1
+            idx += 1
+          end
+        end
+    
+        idx -= j
+        
+        # Add the tags in a row
+        # puts "something happens before"
+        html << "<div class='tag'>("
+        for i in 0...j
+          # puts idx
+          html << %(<a href="#{refDict[idx][:url]}" class="tag-link">#{refDict[idx][:label]}</a>,)
+          idx += 1
+        end
+        html.chop! # Remove the last comma
+        html << ")</div>" # Close tag
+        html << "</div>\n" # Close single-equation       
+      end
+      
+      # Put everything inside an equation group
+      <<~HTML  
+        <div class="equation-group">
+          #{html}
+        </div>
+      HTML
+    end
+  end
 end
 
 
@@ -685,6 +788,7 @@ Liquid::Template.register_tag('envlabel', Jekyll::EnvLabel)
 Liquid::Template.register_tag('ref',Jekyll::Reference)
 Liquid::Template.register_tag('envproof', Jekyll::EnvProof)
 Liquid::Template.register_tag('equation', Jekyll::EquationLabel)
+Liquid::Template.register_tag('gridequations', Jekyll::GridEquations)
 Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 Liquid::Template.register_tag('proofref', Jekyll::ProofRef)
 Liquid::Template.register_tag('includetex', Jekyll::IncludeTex)

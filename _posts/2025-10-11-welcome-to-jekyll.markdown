@@ -46,4 +46,8 @@ A = \int\sum_k a_k(x)v_k(x,y)dx
 $$
 {% endenvproof %}
 
+{% gridequations ncols=2 %}
+E = mc^2,\\F = ma,\\a^2 + b^2 = c^2
+{% endgridequations %}
+
 
