@@ -48,8 +48,8 @@ $$
 
 {% gridequations ncols=2 %}
 \begin{split}
-E = mc^2,E = mc^2
-\end{split},\\F = ma,\\a^2 + b^2 = c^2\\a^2 + b^2 = c^2
+E = mc^2\\\EE = mc^2
+\end{split},\\F = ma,\\a^2 + b^2 = c^2,\\a^2 + b^2 = c^2
 {% endgridequations %}
 
 

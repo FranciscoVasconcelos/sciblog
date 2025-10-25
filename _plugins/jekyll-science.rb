@@ -510,6 +510,38 @@ module Jekyll
   end
 end
 
+def split_equations(content)
+  equations = []
+  
+  # Find all environment boundaries to exclude labels inside them
+  env_pattern = /\\begin\{([a-zA-Z0-9_-]+)\}.*?\\end\{\1\}/m
+  ranges = []
+  content.scan(env_pattern) do
+    ranges << (Regexp.last_match.begin(0)..Regexp.last_match.end(0))
+  end
+
+  idx_last = 0
+  idx = 0
+  content.scan(/\\\\/) do
+    match = Regexp.last_match
+    idx = match.offset(0)[1]
+    
+    # Check if "\\" is inside any environment
+    inside = ranges.any? { |range| range.cover?(idx) }
+    
+    # Add only the equations that are not inside
+    unless inside
+      equations << content[idx_last...idx]
+      idx_last = match.offset(0)[0]
+    end
+  end
+
+  equations << content[idx...]
+
+  return equations
+end
+
+
 module Jekyll
   class EquationLabel < Liquid::Block
     def initialize(tag_name, markup, tokens)
@@ -598,7 +630,8 @@ module Jekyll
       content = super
       
       # Split each equation by \\
-      equations = content.split(/\\\\/)
+      # equations = content.split(/\\\\/)
+      equations = split_equations(content)
       
       html = ""
       equations.each_with_index do |eq,idx|
@@ -668,7 +701,8 @@ module Jekyll
       content = super
       
       # Split each equation by \\
-      equations = content.split(/\\\\/)
+      # equations = content.split(/\\\\/)
+      equations = split_equations(content)
       
       # Get all the references
       refDict = []
@@ -966,7 +1000,13 @@ def injectAtEndBody(post,content)
   return false
 end
 
-
+def injectAtBeginBody(post,content)
+  if post.output_ext == ".html"
+      post.output.sub!(/<body>/, "<body>#{content}")
+      return true
+  end
+  return false
+end
 
 # Ensures that the acronyms are unique and autogenerates from title
 Jekyll::Hooks.register :site, :pre_render do |site|
@@ -1125,11 +1165,27 @@ def getContentExtra()
   HTML
 end
 
+# Get the latex commands 
+def getLatexCommands()
+  dir = File.expand_path("../",__dir__)
+  filename = File.join(dir,"latex-commands.tex")
+  return "" if !File.file?(filename)
+  commands = File.read(filename)
 
+  <<~HTML
+  <div style="display:none">
+  $$
+  #{commands}
+  $$
+  </div>
+  HTML
+end
 
 Jekyll::Hooks.register :site, :post_render do |site|
   js_content  = appendPostsUrlVar(site,"repeat.js")
   extra_content = getContentExtra()
+  commands = getLatexCommands()
+  puts commands
   ref = site.config['ref']
 
   # Iterate over all posts
@@ -1141,6 +1197,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       generateProof(post,site)
       injectAtEndBody(post,js_content)
       injectAtEndBody(post,extra_content)
+      injectAtBeginBody(post,commands)
       AppendAllEnvStyles(site,post)
     end
   end
