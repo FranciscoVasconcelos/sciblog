@@ -9,8 +9,13 @@ section_with_acronym: true
 
 
 
+<script>
+{% include element-handler.js %}
+</script>
 
-
+<style>
+{% include balloon.css %}
+</style>
 
 
 This → {% ref some-label %} is a link to a section 
