@@ -262,20 +262,13 @@ module Jekyll
         <div class="header user-header">
             #{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a>
         </div>
-        <button class="hide-button user-hide-button" onclick="toggleContent#{id}()"></button>
+        <button class="hide-button user-hide-button" onclick="toggleContent('#{anchor}')"></button>
         <div class="content user-content">
             #{rendered}
             #{linkproof}
         </div>
         </div>
       </div>
-
-      <script>
-        function toggleContent#{id}() {
-            const content = document.getElementById('#{anchor}');
-            content.style.display = 'none';
-        }
-      </script>
       HTML
 
     end
@@ -1132,19 +1125,13 @@ def generateProof(post,site)
       <div class="header user-header">
       #{proof_ref_html}
       </div>
-      <button class="hide-button user-hide-button" onclick="toggleContent#{id}()"></button>
+      <button class="hide-button user-hide-button" onclick="toggleContent('#{anchor}')"></button>
       <div class="content user-content">
           #{content}
       </div>
       </div>
     </div>
 
-    <script>
-      function toggleContent#{id}() {
-          const content = document.getElementById('#{anchor}');
-          content.style.display = 'none';
-      }
-    </script>
     HTML
   end
 end

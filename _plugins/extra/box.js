@@ -173,6 +173,12 @@ class HashNavigation {
         }, 2000);
     }}
 
+function toggleContent(id) {
+    const content = document.getElementById(id);
+    content.style.display = 'none';
+}
+
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     new HashNavigation();
