@@ -82,10 +82,10 @@ def saveRef(url,label,env,key,site)
   site.config["ref"][key] = {"url"=>url,"label"=>label,"env"=>env}
 end
 
-def genRef(context,envname,label,level=nil,subeq=false)
+def genRef(context,envname,label,level=nil,subeq=false,ref='math-ref-')
   # envcounter = setupEnv(context,envname)
   envcounter = context[envname]["counter"]
-  anchor = "math-ref-#{label}"
+  anchor = "#{ref}#{label}"
 
   page = context.registers[:page]
   site = context.registers[:site]
@@ -103,9 +103,9 @@ def genRef(context,envname,label,level=nil,subeq=false)
     label_str = "#{label_str}#{(subcounter + 'a'.ord).chr}"
   end
   # If the reference anchor is empty
-  if anchor == "math-ref-"
+  if anchor == ref
     # Set a unique anchor from the label string
-    anchor = "math-ref-#{label_str}"
+    anchor = "#{ref}#{label_str}"
   end
 
   equrl = url + "\#" + anchor
@@ -814,24 +814,42 @@ module Jekyll
   class SideNoteTag < Liquid::Block
     @@counter = 0
 
-    def initialize(tag_name, text, tokens)
+    def initialize(tag_name, markup, tokens)
       super
-      @text = text.strip
+
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      positional, named = parse_params(markup)
+      @highlight = named['highlight'] || positional[0]
+      @label = named['label'] || positional[1]
+      @title = named['title'] || positional[2]
+
+
+      # @text = text.strip
     end
 
     def render(context)
+
+      setupEnv(context,'side-note')
+      label_str,url,number_str,anchor = genRef(context,'side-note',@label,level=nil,subeq=false,ref="note-ref-")
+      context['side-note']["counter"] += 1;
+      
       note_content = super
 
-      @@counter += 1
+      # @@counter += 1
       
-      note_id = "note-#{@@counter}"
+      # note_id = "note-#{@@counter}"
       note = {
-        'id' => note_id,
-        'counter' => @@counter,
-        'content' => note_content
+        'id' => anchor,
+        'label' => label_str,
+        'url' => url,
+        'content' => note_content,
+        'title' => @title
       }
       
-      highlighted = %(<span class="highlight" data-note="#{note_id}" onclick="toggleNote('#{note_id}')">#{@text}</span>)
+      highlighted = %(<span class="highlight" data-note="#{anchor}" onclick="toggleNote('#{anchor}')">#{@highlight}</span>)
 
       js = generate_javascript_notes(note)
       # Return the element together with the JavaScript
@@ -868,16 +886,17 @@ def generate_javascript_notes(note)
                                    .gsub('${', '\\${')
                                    .gsub("\n", '<br>')
   
+  id = note['id'].gsub('-','_').gsub('.','_')
   <<~JS
     // Note #{note['id']}
-    const noteElement#{note['id'].gsub('-', '')} = document.createElement('div');
-    noteElement#{note['id'].gsub('-', '')}.id = '#{note['id']}';
-    noteElement#{note['id'].gsub('-', '')}.className = 'side-note hidden';
-    noteElement#{note['id'].gsub('-', '')}.innerHTML = \`
+    const noteElement#{id} = document.createElement('div');
+    noteElement#{id}.id = '#{note['id']}';
+    noteElement#{id}.className = 'side-note hidden';
+    noteElement#{id}.innerHTML = \`
       <button class="close-btn" data-note="#{note['id']}" onclick="hideNote('#{note['id']}')">×</button>
-      <h3><span class="note-number">#{note['counter']}</span> Note #{note['counter']}</h3>
+      <h3><a href="#{note['url']}">#{note['label']}</a> #{note['title']}</h3>
       <p>#{escaped_content}</p>\`;
-    document.getElementById('side-notes-container').appendChild(noteElement#{note['id'].gsub('-', '')});
+    document.getElementById('side-notes-container').appendChild(noteElement#{id});
   JS
 end
 
@@ -1221,6 +1240,15 @@ def getContentExtra()
   HTML
 end
 
+def getBalloonStyle()
+  plugin_dir = File.expand_path("extra", __dir__)
+  css_content = File.read(File.join(plugin_dir, "balloon.css"))
+  
+  <<~HTML
+  <style>#{css_content}</style>
+  HTML
+end
+
 # Get the latex commands 
 def getLatexCommands()
   dir = File.expand_path("../",__dir__)
@@ -1241,6 +1269,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
   js_content  = appendPostsUrlVar(site,"repeat.js")
   extra_content = getContentExtra()
   commands = getLatexCommands()
+  ballon_style = getBalloonStyle()
   # side_notes_extra = getSideNotesExtra()
   # side_notes_extra.sub!("GENERATED_JAVASCRIPT",generate_javascript_notes(site))
   # puts commands
@@ -1256,6 +1285,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       injectAtEndBody(post,js_content)
       injectAtEndBody(post,extra_content)
       injectAtBeginBody(post,commands)
+      injectAtBeginBody(post,ballon_style)
       # injectAtBeginBody(post,side_notes_extra)
       AppendAllEnvStyles(site,post)
     end
