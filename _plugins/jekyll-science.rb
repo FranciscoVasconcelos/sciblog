@@ -837,6 +837,7 @@ module Jekyll
       # Return the element together with the JavaScript
       <<~HTML
       #{highlighted}
+
       <script>
         #{js}
       </script>
@@ -872,11 +873,10 @@ def generate_javascript_notes(note)
     const noteElement#{note['id'].gsub('-', '')} = document.createElement('div');
     noteElement#{note['id'].gsub('-', '')}.id = '#{note['id']}';
     noteElement#{note['id'].gsub('-', '')}.className = 'side-note hidden';
-    noteElement#{note['id'].gsub('-', '')}.innerHTML = `
+    noteElement#{note['id'].gsub('-', '')}.innerHTML = \`
       <button class="close-btn" data-note="#{note['id']}" onclick="hideNote('#{note['id']}')">×</button>
       <h3><span class="note-number">#{note['counter']}</span> Note #{note['counter']}</h3>
-      <p>#{escaped_content}</p>
-    `;
+      <p>#{escaped_content}</p>\`;
     document.getElementById('side-notes-container').appendChild(noteElement#{note['id'].gsub('-', '')});
   JS
 end
@@ -1196,16 +1196,14 @@ def generateProof(post,site)
   end
 end
 
-def getSideNotesExtra()
+def getSideNotesExtra(filename='side-notes')
   plugin_dir = File.expand_path("extra", __dir__) 
-  css_content = File.read(File.join(plugin_dir, "side-notes.css"))
-  js_content = File.read(File.join(plugin_dir, "side-notes.js"))
-  html_content = File.read(File.join(plugin_dir, "side-notes.html"))
+  css_content = File.read(File.join(plugin_dir, "#{filename}.css"))
+  js_content = File.read(File.join(plugin_dir, "#{filename}.js"))
  
   <<~HTML
   <script>#{js_content}</script>
   <style>#{css_content}</style>
-  #{html_content}
   HTML
 end
 
@@ -1243,7 +1241,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
   js_content  = appendPostsUrlVar(site,"repeat.js")
   extra_content = getContentExtra()
   commands = getLatexCommands()
-  side_notes_extra = getSideNotesExtra()
+  # side_notes_extra = getSideNotesExtra()
   # side_notes_extra.sub!("GENERATED_JAVASCRIPT",generate_javascript_notes(site))
   # puts commands
   ref = site.config['ref']
@@ -1258,7 +1256,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       injectAtEndBody(post,js_content)
       injectAtEndBody(post,extra_content)
       injectAtBeginBody(post,commands)
-      injectAtBeginBody(post,side_notes_extra)
+      # injectAtBeginBody(post,side_notes_extra)
       AppendAllEnvStyles(site,post)
     end
   end

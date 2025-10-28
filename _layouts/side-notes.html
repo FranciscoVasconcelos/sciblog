@@ -1,3 +1,176 @@
+<!doctype html>
+<html>
+  <head>
+  <style>
+
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f7fa;
+    padding: 20px;
+  }
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 30px;
+    position: relative;
+    flex-direction: row-reverse;
+}
+
+.main-content {
+    flex: 1 1 65%;
+    min-width: 300px;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.side-notes-container {
+    flex: 1 1 30%;
+    min-width: 250px;
+    position: relative;
+}
+
+.side-note {
+    background: #fff;
+    border-left: 4px solid #4a6ee0;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    position: absolute;
+    width: 100%;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateX(10px);
+    z-index: 1;
+}
+
+.side-note.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.side-note.hidden {
+    display: none;
+}
+
+.side-note h3 {
+    margin-top: 0;
+    color: #4a6ee0;
+    font-size: 1.1rem;
+}
+
+.side-note p {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+.note-number {
+    display: inline-block;
+    background: #4a6ee0;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 24px;
+    font-size: 0.8rem;
+    margin-right: 8px;
+}
+
+.highlight {
+    background-color: rgba(74, 110, 224, 0.15);
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.highlight:hover {
+    background-color: rgba(74, 110, 224, 0.25);
+}
+
+.highlight.active {
+    background-color: rgba(74, 110, 224, 0.3);
+    font-weight: 500;
+    box-shadow: 0 0 0 2px rgba(74, 110, 224, 0.4);
+}
+
+.close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #777;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: row-reverse;
+    }
+    
+    .side-notes-container {
+        order: -1;
+        margin-bottom: 20px;
+        height: auto !important;
+    }
+    
+    .side-note {
+        position: relative !important;
+        opacity: 1;
+        transform: none;
+        margin-bottom: 15px;
+    }
+    
+    .side-note.hidden {
+        display: none;
+    }
+}
+          
+  </style>
+
+    <meta charset="utf-8">
+    <title>{{ page.title }}</title>
+  </head>
+  <body>
+    <div class="container">
+       <div class="side-notes-container" id="side-notes-container">
+          <!-- Notes will be dynamically positioned here -->
+      </div>
+        <div class="main-content">
+         {{ content }}
+        </div>
+      </div>
+<script>
 // Note management functions
 let activeNotes = new Set();
 
@@ -113,4 +286,7 @@ window.addEventListener('resize', function() {
         positionNotes();
     }
 });
+</script>
 
+  </body>
+</html>

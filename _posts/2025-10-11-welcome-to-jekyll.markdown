@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: side-notes
 title:  "Fuck you Jekyll!"
 date:   2025-10-11 11:16:18 +0100
 categories: jekyll update
@@ -53,3 +53,7 @@ E = mc^2\\\EE = mc^2
 {% endgridequations %}
 
 This is some text with {% sidenote "some side note" %} This is the text of the side note. With an equation $E=mc^2$ {% endsidenote %}
+
+This is some textThis is some textThis is some textThis is some textThis is some textThis is some textThis is some textThis is some textThis is some text
+This is some text with {% sidenote "some side note" %} This is the text of the side note. With an equation $E=mc^2$ {% endsidenote %}
+
