@@ -810,6 +810,42 @@ module Jekyll
   end
 end
 
+module Jekyll
+  class SideNoteTag < Liquid::Block
+    @@counter = 0
+
+    def initialize(tag_name, text, tokens)
+      super
+      @text = text.strip
+    end
+
+    def render(context)
+      note_content = super
+
+      @@counter += 1
+      
+      note_id = "note-#{@@counter}"
+      note = {
+        'id' => note_id,
+        'counter' => @@counter,
+        'content' => note_content
+      }
+      
+      highlighted = %(<span class="highlight" data-note="#{note_id}" onclick="toggleNote('#{note_id}')">#{@text}</span>)
+
+      js = generate_javascript_notes(note)
+      # Return the element together with the JavaScript
+      <<~HTML
+      #{highlighted}
+      <script>
+        #{js}
+      </script>
+      HTML
+    end
+  end
+end
+
+
 Liquid::Template.register_tag('align',Jekyll::AlignLabel)
 Liquid::Template.register_tag('subequations',Jekyll::Subequations)
 Liquid::Template.register_tag('section',Jekyll::Sectioning)
@@ -821,6 +857,30 @@ Liquid::Template.register_tag('gridequations', Jekyll::GridEquations)
 Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 Liquid::Template.register_tag('proofref', Jekyll::ProofRef)
 Liquid::Template.register_tag('includetex', Jekyll::IncludeTex)
+Liquid::Template.register_tag('sidenote', Jekyll::SideNoteTag)
+
+# Function to create JavaScript from collected notes
+def generate_javascript_notes(note)
+  return "" if(!note) 
+  
+  escaped_content = note['content'].gsub('`', '\\`')
+                                   .gsub('${', '\\${')
+                                   .gsub("\n", '<br>')
+  
+  <<~JS
+    // Note #{note['id']}
+    const noteElement#{note['id'].gsub('-', '')} = document.createElement('div');
+    noteElement#{note['id'].gsub('-', '')}.id = '#{note['id']}';
+    noteElement#{note['id'].gsub('-', '')}.className = 'side-note hidden';
+    noteElement#{note['id'].gsub('-', '')}.innerHTML = `
+      <button class="close-btn" data-note="#{note['id']}" onclick="hideNote('#{note['id']}')">×</button>
+      <h3><span class="note-number">#{note['counter']}</span> Note #{note['counter']}</h3>
+      <p>#{escaped_content}</p>
+    `;
+    document.getElementById('side-notes-container').appendChild(noteElement#{note['id'].gsub('-', '')});
+  JS
+end
+
 
 def generate_sidenav(site)
   sidenav_items = site.posts.docs
@@ -1136,7 +1196,18 @@ def generateProof(post,site)
   end
 end
 
-
+def getSideNotesExtra()
+  plugin_dir = File.expand_path("extra", __dir__) 
+  css_content = File.read(File.join(plugin_dir, "side-notes.css"))
+  js_content = File.read(File.join(plugin_dir, "side-notes.js"))
+  html_content = File.read(File.join(plugin_dir, "side-notes.html"))
+ 
+  <<~HTML
+  <script>#{js_content}</script>
+  <style>#{css_content}</style>
+  #{html_content}
+  HTML
+end
 
 def getContentExtra()
   plugin_dir = File.expand_path("extra", __dir__)
@@ -1172,7 +1243,9 @@ Jekyll::Hooks.register :site, :post_render do |site|
   js_content  = appendPostsUrlVar(site,"repeat.js")
   extra_content = getContentExtra()
   commands = getLatexCommands()
-  puts commands
+  side_notes_extra = getSideNotesExtra()
+  # side_notes_extra.sub!("GENERATED_JAVASCRIPT",generate_javascript_notes(site))
+  # puts commands
   ref = site.config['ref']
 
   # Iterate over all posts
@@ -1185,6 +1258,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       injectAtEndBody(post,js_content)
       injectAtEndBody(post,extra_content)
       injectAtBeginBody(post,commands)
+      injectAtBeginBody(post,side_notes_extra)
       AppendAllEnvStyles(site,post)
     end
   end
