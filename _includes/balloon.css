@@ -19,7 +19,7 @@
         }
 
         .balloon-container {
-            position: absolute;
+            position: fixed;
             z-index: 1000;
             opacity: 0;
             visibility: hidden;
@@ -127,7 +127,7 @@
             font-weight: bold;
         }
 
-        select, button {
+        select{
             border: 2px solid #333;
             padding: 8px 16px;
             border-radius: 8px;
@@ -140,8 +140,8 @@
             color: white;
             cursor: pointer;
             font-size: 16px;
-            box-shadow: 2px 2px 0 #333;
-            transition: all 0.2s ease;
+            box-shadow: 1px 1px 0 #333;
+            transition: all 0.1s ease;
         }
 
         button:hover {

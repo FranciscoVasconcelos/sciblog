@@ -170,38 +170,7 @@ class HoverTagKeyListener {
     }
 }
 
-const niggaLinks = ["/jekyll/update/2025/10/11/goodbye-to-jekyll.html","/jekyll/update/2025/10/11/welcome-to-jekyll.html"];
-elemHandler = new ElementHandler(niggaLinks);
 
-const balloonsDict = {};
-
-new HoverTagKeyListener('a', 'Space', (refElem) => {
-  // console.log("Hovering and pressing space");
-  // console.log(el.href);
-    
-  console.log("Niggaaaaa");
-  // Get the balloon from the dictionary
-  comicBalloon = balloonsDict[refElem.href];
-  // if not found
-  if(!comicBalloon){
-    // create new balloon
-    comicBalloon = new ComicBalloon();
-    // Add the ballon to the dictionary
-    balloonsDict[refElem.href] = comicBalloon;
-  }
-  
-  // create get element callback 
-  callback = (elem) => {
-    console.log(elem);
-    
-    // comicBalloon.addBalloon(refElem, elem, { position: "top" });
-    // refElem is the reference 
-    // elem is the content that I want to display
-    comicBalloon.ShowContent(refElem,elem);
-  }
-  elemHandler.SetOnGetElementCallback(refElem.href,callback);
-  // comicBalloon.addBalloon(targetElement, myElement, { position: 'top' });
-});
 
 // ComicBalloon API Class - Accepts DOM Elements
 class ComicBalloon {
@@ -209,45 +178,60 @@ class ComicBalloon {
         this.balloonContainer = null;
         this.currentElement = null;
         this.isBalloonVisible = false;
-        this.balloons = new Map(); // Store balloon configurations
+        this.balloons = new Map();
+        this.scrollHandler = this.handleScroll.bind(this);
+        this.resizeHandler = this.handleResize.bind(this);
         this.init();
     }
 
     init() {
-        // Create balloon container
+        // Create balloon container - using fixed positioning
         this.balloonContainer = document.createElement('div');
         this.balloonContainer.className = 'balloon-container';
-        // this.balloonContainer.innerHTML = `
-        //     <div class="balloon">
-        //     </div>
-        // `;
+        this.balloonContainer.innerHTML = `
+            <div class="balloon">
+                <div class="balloon-content"></div>
+                <div class="balloon-tail"></div>
+            </div>
+        `;
         document.body.appendChild(this.balloonContainer);
 
-        // Balloon event listeners
-        // this.balloonContainer.addEventListener('mouseenter', () => {
-        //     this.isBalloonVisible = true;
-        // });
+        // Add scroll and resize listeners
+        window.addEventListener('scroll', this.scrollHandler, { passive: true });
+        window.addEventListener('resize', this.resizeHandler, { passive: true });
 
-        // this.balloonContainer.addEventListener('mouseleave', (e) => {
-        //     if (!this.isMovingToTrigger(e)) {
-        //         this.hideBalloon();
-        //     }
-        // });
+        // Balloon event listeners
+        this.balloonContainer.addEventListener('mouseenter', () => {
+            this.isBalloonVisible = true;
+        });
+
+        this.balloonContainer.addEventListener('mouseleave', (e) => {
+            if (!this.isMovingToTrigger(e)) {
+                this.hideBalloon();
+            }
+        });
     }
-    
-    ShowContent(refElem,contentElem){
-      console.log("Adding content as child");
-      this.balloonContainer.appendChild(contentElem);
-      // this.balloonContainer.
-      
-      // Show the ballon
-      this.balloonContainer.style.display = 'block';
-      this.balloonContainer.style.zIndex = 1000; 
-      this.balloonContainer.style.opacity = '1';
-      this.balloonContainer.style.visibility = 'visible';
-      
-      // Set the position of the balloonContainer 
-      this.updatePositionForElement(contentElem,'top');
+
+    // Handle scroll events to update balloon position
+    handleScroll() {
+        if (this.isBalloonVisible && this.currentElement) {
+            this.updatePositionForCurrentElement();
+        }
+    }
+
+    // Handle resize events
+    handleResize() {
+        if (this.isBalloonVisible && this.currentElement) {
+            this.updatePositionForCurrentElement();
+        }
+    }
+
+    // Update position for current element
+    updatePositionForCurrentElement() {
+        const config = this.balloons.get(this.currentElement);
+        if (config) {
+            this.updatePositionForElement(this.currentElement, config.position);
+        }
     }
 
     // API Method: Add balloon to element with DOM element content
@@ -260,13 +244,16 @@ class ComicBalloon {
             ...options
         };
 
+        console.log(element);
+        console.log(contentElement);
+
         // Store balloon configuration
         this.balloons.set(element, config);
 
         // Add event listeners to element
         element.addEventListener('mouseenter', (e) => this.showBalloon(e));
         element.addEventListener('mouseleave', (e) => this.handleElementLeave(e));
-        element.addEventListener('mousemove', (e) => this.updatePosition(e));
+        element.addEventListener('mousemove', (e) => this.updatePositionFromEvent(e));
 
         // Add balloon indicator
         element.style.position = 'relative';
@@ -281,7 +268,7 @@ class ComicBalloon {
             element.appendChild(indicator);
         }
 
-        return this; // For method chaining
+        return this;
     }
 
     // API Method: Remove balloon from element
@@ -361,8 +348,6 @@ class ComicBalloon {
 
     // Internal methods
     showBalloon(event) {
-
-        console.log("Show the fucking ballooooooonnnnn");
         const element = event.currentTarget;
         if (!this.balloons.has(element)) return;
 
@@ -380,7 +365,13 @@ class ComicBalloon {
         this.balloonContainer.style.visibility = 'visible';
         this.balloonContainer.classList.add('visible');
         
-        this.updatePosition(event);
+        this.updatePositionFromEvent(event);
+    }
+
+    updatePositionFromEvent(event) {
+        if (!this.currentElement) return;
+        const config = this.balloons.get(this.currentElement);
+        this.updatePositionForElement(this.currentElement, config.position);
     }
 
     handleElementLeave(event) {
@@ -398,66 +389,86 @@ class ComicBalloon {
         return relatedTarget && this.currentElement && this.currentElement.contains(relatedTarget);
     }
 
-    updatePosition(event) {
-        if (!this.currentElement) return;
-
-        const balloonRect = this.balloonContainer.getBoundingClientRect();
-        const elementRect = this.currentElement.getBoundingClientRect();
-        const config = this.balloons.get(this.currentElement);
-        const position = config.position;
-
-        this.updatePositionForElement(this.currentElement, position);
-    }
-
+    // FIXED: Proper positioning with scroll support
     updatePositionForElement(element, position) {
         const balloonRect = this.balloonContainer.getBoundingClientRect();
         const elementRect = element.getBoundingClientRect();
         
-      // console.log(elementRect);
+        // Get viewport dimensions
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Calculate position based on viewport coordinates (which include scroll)
+        let x, y;
 
+        switch (position) {
+            case 'top':
+                x = elementRect.left + (elementRect.width / 2) - (balloonRect.width / 2);
+                y = elementRect.top - balloonRect.height - 20;
+                break;
+            case 'bottom':
+                x = elementRect.left + (elementRect.width / 2) - (balloonRect.width / 2);
+                y = elementRect.bottom + 20;
+                break;
+            case 'left':
+                x = elementRect.left - balloonRect.width - 20;
+                y = elementRect.top + (elementRect.height / 2) - (balloonRect.height / 2);
+                break;
+            case 'right':
+                x = elementRect.right + 20;
+                y = elementRect.top + (elementRect.height / 2) - (balloonRect.height / 2);
+                break;
+        }
 
+        // Keep balloon within viewport with proper padding
+        const padding = 10;
+        x = Math.max(padding, Math.min(x, viewportWidth - balloonRect.width - padding));
+        y = Math.max(padding, Math.min(y, viewportHeight - balloonRect.height - padding));
 
-        // let x, y;
-        //
-        // switch (position) {
-        //     case 'top':
-        //         x = elementRect.right + (elementRect.width / 2) - (balloonRect.width / 2);
-        //         y = elementRect.bottom - balloonRect.height - 20;
-        //         break;
-        //     case 'bottom':
-        //         x = elementRect.left + (elementRect.width / 2) - (balloonRect.width / 2);
-        //         y = elementRect.bottom + 20;
-        //         break;
-        //     case 'left':
-        //         x = elementRect.left - balloonRect.width - 20;
-        //         y = elementRect.top + (elementRect.height / 2) - (balloonRect.height / 2);
-        //         break;
-        //     case 'right':
-        //         x = elementRect.right + 20;
-        //         y = elementRect.top + (elementRect.height / 2) - (balloonRect.height / 2);
-        //         break;
-        // }
-        //
-        // const padding = 10;
-        // x = Math.max(padding, Math.min(x, window.innerWidth - balloonRect.width - padding));
-        // y = Math.max(padding, Math.min(y, window.innerHeight - balloonRect.height - padding));
-        //
-        // this.balloonContainer.style.left = x + 'px';
-        // this.balloonContainer.style.top = y + 'px';
-        this.balloonContainer.style.position = "fixed";
-        this.balloonContainer.style.right = `${window.innerWidth - elementRect.right}px`;
-        this.balloonContainer.style.bottom = `${window.innerHeight - elementRect.bottom}px`;
-        // this.balloonContainer.style.top = elementRect.top + "px";
-        console.log(this.balloonContainer.style);
+        // Apply the positions - since we're using fixed positioning,
+        // we use the viewport-relative coordinates directly
+        this.balloonContainer.style.left = x + 'px';
+        this.balloonContainer.style.top = y + 'px';
+        console.log("Ballon Container Rekt");
         console.log(this.balloonContainer.getBoundingClientRect());
-        // console.log(`inner height=${window.innerHeight}`);
-        // console.log(`bottom=${elementRect.bottom}`);
     }
 
     updateTailPosition(position) {
         const tail = this.balloonContainer.querySelector('.balloon-tail');
         tail.className = 'balloon-tail ' + position;
     }
+
+    // Clean up event listeners
+    destroy() {
+        window.removeEventListener('scroll', this.scrollHandler);
+        window.removeEventListener('resize', this.resizeHandler);
+        this.clearAllBalloons();
+    }
+
 }
+
+const niggaLinks = ["/jekyll/update/2025/10/11/goodbye-to-jekyll.html","/jekyll/update/2025/10/11/welcome-to-jekyll.html"];
+const elemHandler = new ElementHandler(niggaLinks);
+const comicBalloon = new ComicBalloon();
+
+new HoverTagKeyListener('a', 'Space', (refElem) => {
+    // console.log("Hovering and pressing space");
+    // console.log(el.href);
+    
+    // console.log("Niggaaaaa");
+    console.log("Reference Element:");
+    console.log(refElem);
+
+    callback = (elem) => {
+      console.log("Get the element callback...");
+      console.log(elem);
+      console.log(refElem);
+      elem.style.display = 'block';
+      comicBalloon.addBalloon(refElem, elem, { position: "top" });
+      comicBalloon.showBalloonOnElement(refElem);
+    }
+    elemHandler.SetOnGetElementCallback(refElem.href,callback);
+  // comicBalloon.addBalloon(targetElement, myElement, { position: 'top' });
+});
 
 
