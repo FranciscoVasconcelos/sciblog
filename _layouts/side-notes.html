@@ -19,7 +19,7 @@
   }
 
 .container {
-    max-width: 1200px;
+    max-width: 2000px;
     margin: 0 auto;
     display: flex;
     gap: 30px;
@@ -77,6 +77,10 @@
     font-size: 0.95rem;
 }
 
+.side-note a{
+    text-decoration: none;
+}
+
 .note-number {
     display: inline-block;
     background: #4a6ee0;
@@ -92,11 +96,12 @@
 
 .highlight {
     background-color: rgba(74, 110, 224, 0.15);
-    padding: 2px 6px;
+    padding: 1px 3px;
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
+    color: blue;
 }
 
 .highlight:hover {
@@ -188,12 +193,13 @@ function showNote(noteId) {
     
     if (noteElement && highlight) {
         activeNotes.add(noteId);
-        noteElement.classList.remove('hidden');
+        // noteElement.classList.remove('hidden');
         highlight.classList.add('active');
         
-        setTimeout(() => {
-            noteElement.classList.add('active');
-        }, 10);
+        noteElement.style.display = 'block';
+        // setTimeout(() => {
+        //     noteElement.classList.add('active');
+        // }, 10);
         
         positionNotes();
     }
@@ -205,12 +211,13 @@ function hideNote(noteId) {
     
     if (noteElement && highlight) {
         activeNotes.delete(noteId);
-        noteElement.classList.remove('active');
+        // noteElement.classList.remove('active');
         highlight.classList.remove('active');
-        
-        setTimeout(() => {
-            noteElement.classList.add('hidden');
-        }, 300);
+        //
+        // setTimeout(() => {
+        //     noteElement.classList.add('hidden');
+        // }, 300);
+        noteElement.style.display = "none";
         
         positionNotes();
     }

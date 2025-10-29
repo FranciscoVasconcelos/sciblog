@@ -52,8 +52,8 @@ E = mc^2\\\EE = mc^2
 \end{split},\\F = ma,\\a^2 + b^2 = c^2,\\a^2 + b^2 = c^2
 {% endgridequations %}
 
-This is some text with {% sidenote "some side note" %} This is the text of the side note. With an equation $E=mc^2$ {% endsidenote %}
+This is some text with{% sidenote "some side note" %} This is the text of the side note. With an equation $E=mc^2$ {% endsidenote %} This is some textThis is some textThis is some textThis is some textThis is some textThis is some textThis is some textThis is some textThis is some text
+This is some text with{% sidenote "some side note" %} This is the text of the side note. With an equation $E=mc^2$ {% endsidenote %}
 
-This is some textThis is some textThis is some textThis is some textThis is some textThis is some textThis is some textThis is some textThis is some text
-This is some text with {% sidenote "some side note" %} This is the text of the side note. With an equation $E=mc^2$ {% endsidenote %}
 
+<repeat-element> note-ref-Q-2 </repeat-element>

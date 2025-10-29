@@ -244,8 +244,8 @@ class ComicBalloon {
             ...options
         };
 
-        console.log(element);
-        console.log(contentElement);
+        // console.log(element);
+        // console.log(contentElement);
 
         // Store balloon configuration
         this.balloons.set(element, config);
@@ -255,18 +255,18 @@ class ComicBalloon {
         element.addEventListener('mouseleave', (e) => this.handleElementLeave(e));
         element.addEventListener('mousemove', (e) => this.updatePositionFromEvent(e));
 
-        // Add balloon indicator
-        element.style.position = 'relative';
-        if (!element.querySelector('.balloon-indicator')) {
-            const indicator = document.createElement('span');
-            indicator.className = 'balloon-indicator';
-            indicator.innerHTML = '🎈';
-            indicator.style.position = 'absolute';
-            indicator.style.top = '-5px';
-            indicator.style.right = '-5px';
-            indicator.style.fontSize = '12px';
-            element.appendChild(indicator);
-        }
+        // // Add balloon indicator
+        // element.style.position = 'relative';
+        // if (!element.querySelector('.balloon-indicator')) {
+        //     const indicator = document.createElement('span');
+        //     indicator.className = 'balloon-indicator';
+        //     indicator.innerHTML = '🎈';
+        //     indicator.style.position = 'absolute';
+        //     indicator.style.top = '-5px';
+        //     indicator.style.right = '-5px';
+        //     indicator.style.fontSize = '12px';
+        //     element.appendChild(indicator);
+        // }
 
         return this;
     }
@@ -429,8 +429,8 @@ class ComicBalloon {
         // we use the viewport-relative coordinates directly
         this.balloonContainer.style.left = x + 'px';
         this.balloonContainer.style.top = y + 'px';
-        console.log("Ballon Container Rekt");
-        console.log(this.balloonContainer.getBoundingClientRect());
+        // console.log("Ballon Container Rekt");
+        // console.log(this.balloonContainer.getBoundingClientRect());
     }
 
     updateTailPosition(position) {
@@ -444,7 +444,6 @@ class ComicBalloon {
         window.removeEventListener('resize', this.resizeHandler);
         this.clearAllBalloons();
     }
-
 }
 
 // const niggaLinks = ["/jekyll/update/2025/10/11/goodbye-to-jekyll.html","/jekyll/update/2025/10/11/welcome-to-jekyll.html"];
@@ -456,13 +455,13 @@ new HoverTagKeyListener('a', 'Space', (refElem) => {
     // console.log(el.href);
     
     // console.log("Niggaaaaa");
-    console.log("Reference Element:");
-    console.log(refElem);
+    // console.log("Reference Element:");
+    // console.log(refElem);
 
     callback = (elem) => {
       console.log("Get the element callback...");
       console.log(elem);
-      console.log(refElem);
+      // console.log(refElem);
       elem.style.display = 'block';
       comicBalloon.addBalloon(refElem, elem, { position: "top" });
       comicBalloon.showBalloonOnElement(refElem);

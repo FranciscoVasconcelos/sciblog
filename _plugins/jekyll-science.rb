@@ -92,9 +92,7 @@ def genRef(context,envname,label,level=nil,subeq=false,ref='math-ref-')
   url  = page['url']
   acronym = page['acronym']
   
-  if !level
-    level = site.config[envname]["countby"]
-   end
+  level = site.config[envname]["countby"] if !level
   # Get the number from the section counters
   number_str = get_number_from_context(context,level)
   label_str = acronym + "-" + number_str + (envcounter.class == Array ? "" : envcounter.to_s)
@@ -115,12 +113,12 @@ def genRef(context,envname,label,level=nil,subeq=false,ref='math-ref-')
   return label_str,equrl,number_str,anchor
 end
 
-def setupEnv(context,envname)
+def setupEnv(context,envname,countby=0)
   site = context.registers[:site]
  
   # Config for env
   site.config[envname] ||= {} 
-  site.config[envname]["countby"] ||= 0
+  site.config[envname]["countby"] ||= countby
 
   # Counter for env  
   context[envname] ||= {}
@@ -832,10 +830,13 @@ module Jekyll
 
     def render(context)
 
-      setupEnv(context,'side-note')
+      setupEnv(context,'side-note',countby=-1)
+
       label_str,url,number_str,anchor = genRef(context,'side-note',@label,level=nil,subeq=false,ref="note-ref-")
       context['side-note']["counter"] += 1;
       
+      page = context.registers[:page]
+      raise "To use side note you must set layout:side-notes" if page['layout'] != "side-notes"
       note_content = super
 
       # @@counter += 1
@@ -843,23 +844,25 @@ module Jekyll
       # note_id = "note-#{@@counter}"
       note = {
         'id' => anchor,
-        'label' => label_str,
+        'label' => label_str.sub(/.*?-/, ""),
         'url' => url,
         'content' => note_content,
         'title' => @title
       }
-      
-      highlighted = %(<span class="highlight" data-note="#{anchor}" onclick="toggleNote('#{anchor}')">#{@highlight}</span>)
 
       js = generate_javascript_notes(note)
-      # Return the element together with the JavaScript
-      <<~HTML
-      #{highlighted}
+      page['JavaScript'] ||= ''
+      page['JavaScript'] << js
+      
+      # highlighted = %(<span class="highlight" data-note="#{anchor}" onclick="toggleNote('#{anchor}')">#{@highlight}</span><sup>#{note['label']}</sup>))
+      %(<sup class="highlight" data-note="#{anchor}" onclick="toggleNote('#{anchor}')">#{note['label']}</sup>)
 
-      <script>
-        #{js}
-      </script>
-      HTML
+
+
+      # Return the element together with the JavaScript
+      # <<~HTML
+      # #{highlighted} <script> #{js} </script>
+      # HTML
     end
   end
 end
@@ -891,7 +894,8 @@ def generate_javascript_notes(note)
     // Note #{note['id']}
     const noteElement#{id} = document.createElement('div');
     noteElement#{id}.id = '#{note['id']}';
-    noteElement#{id}.className = 'side-note hidden';
+    noteElement#{id}.className = 'side-note active';
+    noteElement#{id}.style.display = 'block';
     noteElement#{id}.innerHTML = \`
       <button class="close-btn" data-note="#{note['id']}" onclick="hideNote('#{note['id']}')">×</button>
       <h3><a href="#{note['url']}">#{note['label']}</a> #{note['title']}</h3>
@@ -1286,6 +1290,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       injectAtEndBody(post,extra_content)
       injectAtBeginBody(post,commands)
       injectAtBeginBody(post,ballon_style)
+      injectAtEndBody(post,"<script>#{post['JavaScript']}</script>")
       # injectAtBeginBody(post,side_notes_extra)
       AppendAllEnvStyles(site,post)
     end
