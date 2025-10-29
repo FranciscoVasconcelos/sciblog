@@ -58,6 +58,8 @@ sciblog:
       proofname: prooof
     equation:
       countby: section
+    side-notes:
+      countby: section
 
 # Exclude from processing.
 # The following items will not be processed, by default.

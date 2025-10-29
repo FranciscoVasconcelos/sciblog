@@ -252,22 +252,24 @@ module Jekyll
       # Render any Liquid inside it
       template = Liquid::Template.parse(content)
       rendered = template.render(context)
+      
+      generateHTMLenv(@envname,anchor,%(#{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a>),%(#{rendered}\n#{linkproof}))
 
-      # The content with a toggle button inside
-      <<~HTML
-      <div class="#{@envname}-box user-#{@envname}-box" id="#{anchor}">
-      <div class='box'>
-        <div class="header user-header">
-            #{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a>
-        </div>
-        <button class="hide-button user-hide-button" onclick="toggleContent('#{anchor}')"></button>
-        <div class="content user-content">
-            #{rendered}
-            #{linkproof}
-        </div>
-        </div>
-      </div>
-      HTML
+      # # The content with a toggle button inside
+      # <<~HTML
+      # <div class="#{@envname}-box user-#{@envname}-box" id="#{anchor}">
+      # <div class='box'>
+      #   <div class="header user-header">
+      #       #{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a>
+      #   </div>
+      #   <button class="hide-button user-hide-button" onclick="toggleContent('#{anchor}')"></button>
+      #   <div class="content user-content">
+      #       #{rendered}
+      #       #{linkproof}
+      #   </div>
+      #   </div>
+      # </div>
+      # HTML
 
     end
   end
@@ -849,20 +851,22 @@ module Jekyll
         'content' => note_content,
         'title' => @title
       }
-
-      js = generate_javascript_notes(note)
-      page['JavaScript'] ||= ''
-      page['JavaScript'] << js
       
-      # highlighted = %(<span class="highlight" data-note="#{anchor}" onclick="toggleNote('#{anchor}')">#{@highlight}</span><sup>#{note['label']}</sup>))
-      %(<sup class="highlight" data-note="#{anchor}" onclick="toggleNote('#{anchor}')">#{note['label']}</sup>)
+      label = label_str.sub(/.*?-/, "")
 
+      content = super 
+      # Render any Liquid inside it
+      template = Liquid::Template.parse(content)
+      rendered = template.render(context)
 
+      header = %(Note <a href="#{url}">\##{label}</a>)
 
-      # Return the element together with the JavaScript
-      # <<~HTML
-      # #{highlighted} <script> #{js} </script>
-      # HTML
+      # Store the content for later rendering
+      page['side-notes'] ||= ''
+      page['side-notes'] << generateHTMLenv('side-notes',anchor,header,rendered)
+
+      %(<sup><a style="text-decoration:none" href="#{url}">#{label}</a></sup>)
+
     end
   end
 end
@@ -1198,25 +1202,27 @@ def generateProof(post,site)
 
     proofname = site.config[envname]['proofname']
     proof_ref_html = refProof(proofurl,envurl,envlabel,proofname,envname)
+    
+    generateHTMLenv(envname,anchor,proof_ref_html,content)
 
-    id = "proof#{prooflabel.gsub('.','_').gsub('-','_')}"
-        
-    # The content with a toggle button inside
+  end
+end
+
+def generateHTMLenv(envname,id,header,content)
+    # The HTML content with a toggle button inside
     <<~HTML
-    <div class="#{envname}-box user-#{@envname}-box" id="#{anchor}">
+    <div class="#{envname}-box user-#{envname}-box" id="#{id}">
     <div class='box'>
       <div class="header user-header">
-      #{proof_ref_html}
+      #{header}
       </div>
-      <button class="hide-button user-hide-button" onclick="toggleContent('#{anchor}')"></button>
+      <button class="hide-button user-hide-button" onclick="toggleContent('#{id}')"></button>
       <div class="content user-content">
           #{content}
       </div>
       </div>
     </div>
-
     HTML
-  end
 end
 
 def getSideNotesExtra(filename='side-notes')
@@ -1269,14 +1275,19 @@ def getLatexCommands()
   HTML
 end
 
+
+def injectSideNotes(post)
+  content = post['side-notes']
+  if content
+    post.output.sub!('<!-- SIDE_NOTES -->',content)
+  end
+end
+
 Jekyll::Hooks.register :site, :post_render do |site|
   js_content  = appendPostsUrlVar(site,"repeat.js")
   extra_content = getContentExtra()
   commands = getLatexCommands()
   ballon_style = getBalloonStyle()
-  # side_notes_extra = getSideNotesExtra()
-  # side_notes_extra.sub!("GENERATED_JAVASCRIPT",generate_javascript_notes(site))
-  # puts commands
   ref = site.config['ref']
 
   # Iterate over all posts
@@ -1290,8 +1301,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       injectAtEndBody(post,extra_content)
       injectAtBeginBody(post,commands)
       injectAtBeginBody(post,ballon_style)
-      injectAtEndBody(post,"<script>#{post['JavaScript']}</script>")
-      # injectAtBeginBody(post,side_notes_extra)
+      injectSideNotes(post)
       AppendAllEnvStyles(site,post)
     end
   end

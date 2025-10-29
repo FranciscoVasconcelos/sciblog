@@ -17,15 +17,14 @@ class HashNavigation {
         // Optional: intercept link clicks for custom behavior
         document.addEventListener('click', (e) => this.handleLinkClick(e));
     }
+    
 
     handleLinkClick(event) {
         const link = event.target.closest('a');
+        
       
         if (!link || !link.hash) return;
         
-        console.log(link);
-        console.log(link.hash);
-
         const isSamePage = link.hostname === window.location.hostname &&
                            link.pathname === window.location.pathname;
           
@@ -33,6 +32,7 @@ class HashNavigation {
             event.preventDefault(); // Always prevent default
             event.stopPropagation(); // Prevent event from bubbling up
             this.handleHash(link.hash, true); // true = from click
+            handleSideNotes(event.target);
         }
     }
 
@@ -177,6 +177,57 @@ function toggleContent(id) {
     const content = document.getElementById(id);
     content.style.display = 'none';
 }
+
+
+/********************** Functions to handle side notes ******************/
+function resolveOverlaps(elements, minGap = 0) {
+  // Filter out hidden elements and map the rest
+  const visibleItems = Array.from(elements)
+    .filter(el => getComputedStyle(el).display !== 'none')
+    .map(el => ({
+      el,
+      top: parseFloat(getComputedStyle(el).top) || 0,
+      height: el.offsetHeight
+    }))
+    .sort((a, b) => a.top - b.top);
+  
+  console.log(visibleItems);
+
+  if (visibleItems.length === 0) return;
+
+  // First visible element stays where it is
+  let lastBottom = visibleItems[0].top + visibleItems[0].height;
+  visibleItems[0].el.style.top = visibleItems[0].top + 'px';
+
+  // Adjust subsequent visible elements
+  for (let i = 1; i < visibleItems.length; i++) {
+    const desiredTop = visibleItems[i].top;
+    const minAllowedTop = lastBottom + minGap;
+    const newTop = Math.max(desiredTop, minAllowedTop);
+
+    visibleItems[i].el.style.top = newTop + 'px';
+    lastBottom = newTop + visibleItems[i].height;
+  }
+}
+
+function handleSideNotes(target){
+  const container = document.getElementById('side-notes-container');
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  // Put the side-note in the correct vertical position
+  let elem = document.getElementById(target.hash.slice(1));
+  if(elem.classList.contains('side-notes-box')){
+    let ref = target.getBoundingClientRect();
+    elem.style.top = `${ref.top + scrollTop-elem.offsetHeight}px`;
+    elem.style.position = "absolute";
+  }
+  resolveOverlaps(container.children);
+}
+
+// Set the side-notes as invisible
+const container = document.getElementById('side-notes-container');
+Array.from(container.children).forEach(elem =>{
+  elem.style.display = 'none';
+});
 
 
 // Initialize when DOM is ready

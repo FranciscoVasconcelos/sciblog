@@ -255,19 +255,6 @@ class ComicBalloon {
         element.addEventListener('mouseleave', (e) => this.handleElementLeave(e));
         element.addEventListener('mousemove', (e) => this.updatePositionFromEvent(e));
 
-        // // Add balloon indicator
-        // element.style.position = 'relative';
-        // if (!element.querySelector('.balloon-indicator')) {
-        //     const indicator = document.createElement('span');
-        //     indicator.className = 'balloon-indicator';
-        //     indicator.innerHTML = '🎈';
-        //     indicator.style.position = 'absolute';
-        //     indicator.style.top = '-5px';
-        //     indicator.style.right = '-5px';
-        //     indicator.style.fontSize = '12px';
-        //     element.appendChild(indicator);
-        // }
-
         return this;
     }
 
