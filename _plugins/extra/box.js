@@ -223,6 +223,11 @@ function handleSideNotes(target){
   resolveOverlaps(container.children);
 }
 
+window.addEventListener('resize', function() {
+  const container = document.getElementById('side-notes-container');
+  resolveOverlaps(container.children);
+});
+
 // Set the side-notes as invisible
 const container = document.getElementById('side-notes-container');
 Array.from(container.children).forEach(elem =>{
