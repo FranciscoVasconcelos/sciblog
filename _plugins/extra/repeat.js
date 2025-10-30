@@ -461,7 +461,11 @@ const elements = document.getElementsByTagName('repeat-element');
 
 for(const refElem of elements){
   elemHandler.SetOnGetElementCallback(refElem.getAttribute("url"), (elem) => {
-    refElem.insertAdjacentElement('afterend', elem);
+    clone = elem.cloneNode(true);
+    // Set the clone to visible
+    clone.style.display = 'block'; 
+    // Display the clone
+    refElem.insertAdjacentElement('afterend', clone);
   }
   );
 }

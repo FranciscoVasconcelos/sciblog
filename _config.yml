@@ -50,6 +50,7 @@ sciblog:
     lemma:
       countby: subsection
       proofname: proof
+      side-content: true
     exercise:
       countby: section
       proofname: solution
@@ -60,6 +61,11 @@ sciblog:
       countby: section
     side-notes:
       countby: section
+    note:
+      countby: document
+      label-without-acronym: true
+      side-content: true
+      start-hidden: true
 
 # Exclude from processing.
 # The following items will not be processed, by default.

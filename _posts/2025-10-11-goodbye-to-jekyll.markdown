@@ -15,7 +15,7 @@ This → {% ref some-label %} is a link to a section
 
 
 <!-- Create a theorem  -->
-{% envlabel theorem theo:this:theorem true %}
+{% theorem theo:this:theorem true %}
 This is a theorem for einstein
 $$
 e=mc^2
@@ -27,7 +27,7 @@ some other equation with a new tag
 \pi = \sum_k \pi_k^{\theta_k}
 {% endequation %}
 
-{% endenvlabel %}
+{% endtheorem %}
 
 {% align labels="eq:pi:777;eq:theta" %}
 \pi = \sum_k \pi_k^{\theta_k}\\\int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}
@@ -47,7 +47,7 @@ some other equation with a new tag
 {% section "This is a named section with spaces" level=1 label=ugly-section %}
 
 <!-- Create a definition  -->
-{% envlabel definition def:this:coco false %}
+{% definition def:this:coco false %}
 
 This is a definition labeled by subsection
 
@@ -58,7 +58,7 @@ c = \sum_i \theta_i\eta_i\label{the:coco:eq}
 $$
 
 
-{% endenvlabel %}
+{% enddefinition %}
 
 
 
@@ -95,7 +95,7 @@ And if I add <a href="www.fuck.com">this</a>
 
 [Link to a page]({% link _posts/2025-10-11-welcome-to-jekyll.markdown %})
 
-{% envlabel theorem theo:this:theorem:other true %}
+{% theorem theo:this:theorem:other true %}
 This is a theorem for einstein
 $$
 e^x = \sum_{k=0}^\infty \frac{x^k}{k!}
@@ -107,7 +107,7 @@ some other equation with a new tag
 f(x) = \sum_k a_k x^k
 {% endequation %}
 
-{% endenvlabel %}
+{% endtheorem %}
 
 {% envproof theo:this:theorem:other %}
 This is a crappy proof of the theorem. Use $\eqref{the:coco:eq}$ to show that 
@@ -128,7 +128,7 @@ And if I add <a href="www.fuck.com">this</a>
 
 {% endenvproof %}
 
-{% ref P-1. %}
+{% ref section-P-1. %}
 
 This is a repeated theorem:
 {% repeat theo:this:theorem %}

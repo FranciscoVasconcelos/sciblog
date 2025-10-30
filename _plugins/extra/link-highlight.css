@@ -1,6 +1,6 @@
 
 div:target {
-  animation: flash 0.1s;
+  animation: flash 2s;
 }
 
 @keyframes flash {

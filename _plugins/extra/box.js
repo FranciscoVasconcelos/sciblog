@@ -215,9 +215,9 @@ function handleSideNotes(target){
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
   // Put the side-note in the correct vertical position
   let elem = document.getElementById(target.hash.slice(1));
-  if(elem.classList.contains('side-notes-box')){
+  if(container.contains(elem)){ // check if elem is child of container
     let ref = target.getBoundingClientRect();
-    elem.style.top = `${ref.top + scrollTop-elem.offsetHeight}px`;
+    elem.style.top = `${ref.top + scrollTop - elem.offsetHeight}px`;
     elem.style.position = "absolute";
   }
   resolveOverlaps(container.children);

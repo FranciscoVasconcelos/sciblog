@@ -53,11 +53,22 @@ def valid_param_order?(text)
   return true
 end
 
+$section_levels = {
+  'document' => -1,
+  'section' => 0,
+  'subsection' => 1,
+  'subsubsection' => 2,
+  'paragraph' => 3,
+  'subparagraph' => 4
+}
+
+
 # Counts the number of consecutive "sub" prefixes before "section".
 def count_sub_prefixes(str)
   # Use regex to match: zero or more "sub", followed by "section" at the end
   return nil unless str != nil
   match = str.match(/^((?:sub)*)section$/)
+  return -1 if !match && str == 'document'
   return nil unless match
   
   # Count how many times "sub" appears in the captured group
@@ -103,7 +114,7 @@ def genRef(context,envname,label,level=nil,subeq=false,ref='math-ref-')
   # If the reference anchor is empty
   if anchor == ref
     # Set a unique anchor from the label string
-    anchor = "#{ref}#{label_str}"
+    anchor = "#{ref}#{envname}-#{label_str}"
   end
 
   equrl = url + "\#" + anchor
@@ -204,7 +215,7 @@ end
 
 
 module Jekyll
-  class EnvLabel < Liquid::Block
+  class Environment < Liquid::Block
     def initialize(tag_name, markup, tokens)
       super
     
@@ -213,24 +224,19 @@ module Jekyll
           "Positional arguments must come before named arguments"
       end
       
-
       positional, named = parse_params(markup)
 
-      @envname = named['envname'] || positional[0]
-      @label = named['label'] || positional[1]
-      @proof = named['showproof'] || positional[2] == 'true' 
-
+      @envname = tag_name
+      @label = named['label'] || positional[0]
+      @proof = named['showproof'] || positional[1] == 'true' 
+      @side = named['side-content'] || positional[2]
+      
+      puts tag_name
     end
     def render(context)
       page = context.registers[:page]
       site = context.registers[:site]
 
-      url  = page['url']
-      acronym = page['acronym']
-      
-      # anchor = "math-ref-#{@label}"
-      
-      # envcounter = setupEnv(context,@envname)
       setupEnv(context,@envname)
       label_str,equrl,number_str,anchor = genRef(context,@envname,@label)
       # increment env counter 
@@ -253,24 +259,26 @@ module Jekyll
       template = Liquid::Template.parse(content)
       rendered = template.render(context)
       
-      generateHTMLenv(@envname,anchor,%(#{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a>),%(#{rendered}\n#{linkproof}))
+      label_str = "\##{label_str.sub(/.*?-/, "")}" if site.config[@envname]["label-without-acronym"]
+      header =  %(#{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a>)
+      hidden = site.config[@envname]['start-hidden']
+      out = generateHTMLenv(@envname,anchor,header,%(#{rendered}\n#{linkproof}),hidden)
+      
+      if @side == nil
+        @side = site.config[@envname]['side-content']
+      elsif @side == 'true'
+        @side = true
+      end
 
-      # # The content with a toggle button inside
-      # <<~HTML
-      # <div class="#{@envname}-box user-#{@envname}-box" id="#{anchor}">
-      # <div class='box'>
-      #   <div class="header user-header">
-      #       #{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a>
-      #   </div>
-      #   <button class="hide-button user-hide-button" onclick="toggleContent('#{anchor}')"></button>
-      #   <div class="content user-content">
-      #       #{rendered}
-      #       #{linkproof}
-      #   </div>
-      #   </div>
-      # </div>
-      # HTML
-
+      if @side
+        raise "To use side note you must set layout:side-notes" if page['layout'] != "side-notes"
+        # Store the content for later rendering
+        page['side-notes'] ||= ''
+        page['side-notes'] << out
+        return %(<sup><a style="text-decoration:none" href="#{equrl}">#{label_str.sub(/.*?-/, "").gsub('#','')}</a></sup>)
+      else 
+        return out
+      end
     end
   end
 end
@@ -810,72 +818,11 @@ module Jekyll
   end
 end
 
-module Jekyll
-  class SideNoteTag < Liquid::Block
-    @@counter = 0
-
-    def initialize(tag_name, markup, tokens)
-      super
-
-      unless valid_param_order?(markup)
-        raise SyntaxError, 
-          "Positional arguments must come before named arguments"
-      end
-      positional, named = parse_params(markup)
-      @highlight = named['highlight'] || positional[0]
-      @label = named['label'] || positional[1]
-      @title = named['title'] || positional[2]
-
-
-      # @text = text.strip
-    end
-
-    def render(context)
-
-      setupEnv(context,'side-note',countby=-1)
-
-      label_str,url,number_str,anchor = genRef(context,'side-note',@label,level=nil,subeq=false,ref="note-ref-")
-      context['side-note']["counter"] += 1;
-      
-      page = context.registers[:page]
-      raise "To use side note you must set layout:side-notes" if page['layout'] != "side-notes"
-      note_content = super
-
-      # @@counter += 1
-      
-      # note_id = "note-#{@@counter}"
-      note = {
-        'id' => anchor,
-        'label' => label_str.sub(/.*?-/, ""),
-        'url' => url,
-        'content' => note_content,
-        'title' => @title
-      }
-      
-      label = label_str.sub(/.*?-/, "")
-
-      content = super 
-      # Render any Liquid inside it
-      template = Liquid::Template.parse(content)
-      rendered = template.render(context)
-
-      header = %(Note <a href="#{url}">\##{label}</a>)
-
-      # Store the content for later rendering
-      page['side-notes'] ||= ''
-      page['side-notes'] << generateHTMLenv('side-notes',anchor,header,rendered)
-
-      %(<sup><a style="text-decoration:none" href="#{url}">#{label}</a></sup>)
-
-    end
-  end
-end
 
 
 Liquid::Template.register_tag('align',Jekyll::AlignLabel)
 Liquid::Template.register_tag('subequations',Jekyll::Subequations)
 Liquid::Template.register_tag('section',Jekyll::Sectioning)
-Liquid::Template.register_tag('envlabel', Jekyll::EnvLabel)
 Liquid::Template.register_tag('ref',Jekyll::Reference)
 Liquid::Template.register_tag('envproof', Jekyll::EnvProof)
 Liquid::Template.register_tag('equation', Jekyll::EquationLabel)
@@ -883,7 +830,6 @@ Liquid::Template.register_tag('gridequations', Jekyll::GridEquations)
 Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 Liquid::Template.register_tag('proofref', Jekyll::ProofRef)
 Liquid::Template.register_tag('includetex', Jekyll::IncludeTex)
-Liquid::Template.register_tag('sidenote', Jekyll::SideNoteTag)
 
 # Function to create JavaScript from collected notes
 def generate_javascript_notes(note)
@@ -944,18 +890,25 @@ def createEnv(site,dict,name)
   # This must be executed after_init or pre_render
   countby = dict["countby"]
   proofname = dict["proofname"]
+  
   level = count_sub_prefixes(countby)
   
   level = 0 if !countby or !level
   proofname = 'proof' if !proofname
 
-  envdict = {}
+  envdict = dict.dup # Create a copy of dict
   envdict["countby"] = level
   envdict["proofname"] = proofname
+  # envdict["label-with-acronym"] = dict["label-with-acronym"]
+  # envdict["side-content"] = dict["side-content"]
 
   site.config[name] = envdict
   site.config['envs'] ||= []
   site.config['envs'] << name
+  
+  # Register tag for the corresponding env
+  Liquid::Template.register_tag(name, Jekyll::Environment) if name != 'equation'
+  
 end
 
 def createEnvs(site,envs)
@@ -1208,10 +1161,14 @@ def generateProof(post,site)
   end
 end
 
-def generateHTMLenv(envname,id,header,content)
+def generateHTMLenv(envname,id,header,content,hidden=false)
+    
+    style = ''
+    style = %(style="display:none;") if hidden 
     # The HTML content with a toggle button inside
     <<~HTML
-    <div class="#{envname}-box user-#{envname}-box" id="#{id}">
+
+    <div class="#{envname}-box user-#{envname}-box" id="#{id}" #{style}>
     <div class='box'>
       <div class="header user-header">
       #{header}
@@ -1293,6 +1250,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
   # Iterate over all posts
   site.posts.docs.each do |post|
     if post.output_ext == ".html"
+      injectSideNotes(post)
       setRepeat(post,ref)
       setReference(post,ref)
       setProof(post,site)
@@ -1301,7 +1259,6 @@ Jekyll::Hooks.register :site, :post_render do |site|
       injectAtEndBody(post,extra_content)
       injectAtBeginBody(post,commands)
       injectAtBeginBody(post,ballon_style)
-      injectSideNotes(post)
       AppendAllEnvStyles(site,post)
     end
   end
