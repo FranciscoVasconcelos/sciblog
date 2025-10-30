@@ -1344,3 +1344,23 @@ module Jekyll
   end
 end
 
+# Generator to add plugin layouts 
+module Jekyll
+  class LayoutLoader < Generator
+    safe true
+
+    def generate(site)
+      layouts_path = File.expand_path("../extra/layouts", __FILE__)
+      site.layouts.merge!(read_layouts(site, layouts_path))
+    end
+
+    def read_layouts(site, layouts_path)
+      result = {}
+      Dir[File.join(layouts_path, "*.html")].each do |file|
+        name = File.basename(file, ".html")
+        result[name] = Jekyll::Layout.new(site, layouts_path, "#{name}.html")
+      end
+      result
+    end
+  end
+end
