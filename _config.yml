@@ -50,7 +50,8 @@ sciblog:
     lemma:
       countby: subsection
       proofname: proof
-      side-content: true
+      side-content: false
+      display-mode: overlay
     exercise:
       countby: section
       proofname: solution

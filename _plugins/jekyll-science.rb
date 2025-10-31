@@ -230,6 +230,7 @@ module Jekyll
       @label = named['label'] || positional[0]
       @proof = named['showproof'] || positional[1] == 'true' 
       @side = named['side-content'] || positional[2]
+      @display_mode = named['display_mode'] || positional[3]
       
       puts tag_name
     end
@@ -262,7 +263,8 @@ module Jekyll
       label_str = "\##{label_str.sub(/.*?-/, "")}" if site.config[@envname]["label-without-acronym"]
       header =  %(#{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a>)
       hidden = site.config[@envname]['start-hidden']
-      out = generateHTMLenv(@envname,anchor,header,%(#{rendered}\n#{linkproof}),hidden)
+      @display_mode = site.config[@envname]['display-mode'] || 'inline' if !@display_mode 
+      out = generateHTMLenv(@envname,anchor,header,%(#{rendered}\n#{linkproof}),hidden,@display_mode)
       
       if @side == nil
         @side = site.config[@envname]['side-content']
@@ -1120,7 +1122,7 @@ def setReference(post,ref)
       label = "#{ref[key]['label']}"
 
       # Return an anchor link
-      %(<a style="color:blue" href="#{equrl}">#{label}</a>) 
+      %(<a style="color:blue; text-decoration:none" href="#{equrl}">#{label}</a>) 
     else
       raise "Key #{key} does not exist"
     end
@@ -1161,14 +1163,15 @@ def generateProof(post,site)
   end
 end
 
-def generateHTMLenv(envname,id,header,content,hidden=false)
+def generateHTMLenv(envname,id,header,content,hidden=false,display_mode='inline')
     
     style = ''
     style = %(style="display:none;") if hidden 
+    
     # The HTML content with a toggle button inside
     <<~HTML
 
-    <div class="#{envname}-box user-#{envname}-box" id="#{id}" #{style}>
+    <div class="#{envname}-box user-#{envname}-box #{display_mode}" id="#{id}" #{style}>
     <div class='box'>
       <div class="header user-header">
       #{header}

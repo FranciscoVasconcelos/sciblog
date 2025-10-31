@@ -59,3 +59,16 @@ div:target {
     flex: 1 1 auto;  /* consumes all remaining space */
     background: black; /* optional */
 }
+
+.overlay{
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    width: 90%;
+    max-width: 1000px;
+    animation: fadeIn 0.4s ease-out;
+}
+

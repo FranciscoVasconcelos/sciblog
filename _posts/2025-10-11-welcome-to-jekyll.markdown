@@ -6,7 +6,8 @@ categories: jekyll update
 acronym: P
 ---
 
-
+<!-- <style> -->
+<!-- </style> -->
 
 {% ref sec:here %}
 
@@ -67,4 +68,6 @@ some other equation with a new tag
 
 {% endlemma %}
 
+
+This is a link for the lemma {% ref lemma:this:theorem %}
 

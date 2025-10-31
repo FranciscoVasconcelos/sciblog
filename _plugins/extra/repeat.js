@@ -150,7 +150,7 @@ class HoverTagKeyListener {
         });
 
         document.addEventListener('keydown', (e) => {
-            if(e.code === this.key && e.ctrlKey){
+            if(e.code === this.key){
                 this.isKeyDown = true;
                 this.check();
             }
@@ -437,7 +437,7 @@ class ComicBalloon {
 const elemHandler = new ElementHandler(postsLinks);
 const comicBalloon = new ComicBalloon();
 
-new HoverTagKeyListener('a', 'Space', (refElem) => {
+new HoverTagKeyListener('a', 's', (refElem) => {
     // console.log("Hovering and pressing space");
     // console.log(el.href);
     
@@ -469,3 +469,11 @@ for(const refElem of elements){
   }
   );
 }
+
+const popupEles = document.getElementsByClassName('overlay');
+popupEles.array.forEach((el)=>{
+      const labelElems  = document.querySelectorAll(`[href$="#${el.id}"]`);
+      labelElems.array.forEach(refElem => {
+        comicBalloon.addBalloon(refElem, el, { position: "top" });
+      });
+});
