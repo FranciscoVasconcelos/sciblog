@@ -45,6 +45,38 @@ display-mode: inplace/overlay/side/popup (default: inplace)
 
 If the display-mode is set in the general configuration file then I only need to change the CSS style for the case of the overlay. 
 
+Change the style of all the elements 
+```js
+function applyStyles(element, styles) {
+    Object.entries(styles).forEach(([property, value]) => {
+        element.style[property] = value;
+    });
+}
+
+// Usage:
+const #{envname}Box = document.querySelector('.#{envname}-box');
+if (#{envname}) {
+    applyStyles(lemmaBox, {
+        display: 'none',
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: '1000',
+        width: '90%',
+        maxWidth: '1000px',
+        animation: 'fadeIn 0.4s ease-out'
+    });
+}
+```
+I could also just append to the style. Create class overlay 
+
+```css
+.overlay{
+
+}
+```
+
 For the ballon/popup need to add all the elements of that class to the balloon 
 
 ```js
@@ -59,26 +91,4 @@ elems.forEach((elem)=>{
 });
 ```
 
-```js
-function applyStyles(element, styles) {
-    Object.entries(styles).forEach(([property, value]) => {
-        element.style[property] = value;
-    });
-}
 
-// Usage:
-const lemmaBox = document.querySelector('.lemma-box');
-if (lemmaBox) {
-    applyStyles(lemmaBox, {
-        display: 'none',
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: '1000',
-        width: '90%',
-        maxWidth: '1000px',
-        animation: 'fadeIn 0.4s ease-out'
-    });
-}
-```
