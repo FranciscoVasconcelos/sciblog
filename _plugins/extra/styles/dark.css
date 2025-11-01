@@ -1,0 +1,51 @@
+
+pretty-box {
+  display: block;
+  margin: 12px 0;
+}
+pretty-box .box {
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  background-color: #1e1e1e;
+  color: #ddd;
+  position: relative;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+pretty-box .header {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  border-bottom: 2px solid #555;
+  color: #00bcd4;
+}
+pretty-box .content {
+  margin-top: 8px;
+}
+pretty-box .hide-button {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background-color: #00bcd4;
+  color: #111;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+pretty-box .hide-button:hover {
+  background-color: #0097a7;
+  color: #eee;
+}
+pretty-box .hide-button::before {
+  content: "Hide";
+}
+pretty-box a {
+  color: #66ff99;
+  text-decoration: none;
+  font-weight: bold;
+}
+pretty-box a:hover {
+  color: #33cc66;
+}

@@ -1,10 +1,18 @@
 # Convert LaTeX environments and commands to Liquid tags in Markdown files.
 
+# require 'debug'  # Must be at the top or before code you want to debug
 require 'fileutils'
 
 $section_pattern = /\\(section|subsection|subsubsection|paragraph|subparagraph)\{([^}]+)\}/
 $label_pattern = /\\label\{([^}]+)\}/
-$env_pattern = /\\begin\{(?<name>[a-zA-Z0-9_-]+)\}(?<content>.*?)\\end\{\k<name>\}/m
+# $env_pattern = /\\begin\{(?<name>[a-zA-Z0-9_-]+)\}(?<content>.*?)\\end\{\k<name>\}/m
+$env_pattern = /
+  \\begin\{(?<name>[a-zA-Z0-9_-]+)\}        # environment name
+  (?:\[(?<options>[^\]]*)\])?                # optional [options]
+  (?<content>.*?)                           # environment content
+  \\end\{\k<name>\}                         # matching \end{...}
+/mxs
+
 $section_levels = {
   'section' => 1,
   'subsection' => 2,
@@ -82,8 +90,9 @@ def parse_recursive(content)
       matches << {
         envname: match[:name],
         cnt: match[:content],
-        idx_cnt_start: match.offset(2)[0],
-        idx_cnt_end: match.offset(2)[1],
+        options: match[:options],
+        idx_cnt_start: match.offset(3)[0],
+        idx_cnt_end: match.offset(3)[1],
         idx_start: match.offset(0)[0],
         idx_end: match.offset(0)[1],
       }
@@ -93,7 +102,7 @@ def parse_recursive(content)
       labels, cleaned_content = parse_recursive(match[:cnt])
       env_name = match[:envname]
 
-      opening_tag = "{% #{env_name} #{labels} %}"
+      opening_tag = "{% #{env_name} #{labels} #{match[:options]} %}"
       closing_tag = "{% end#{env_name} %}"
       
       cleaned_content_out += %(#{opening_tag}\n#{cleaned_content}\n#{closing_tag}\n)
@@ -153,3 +162,24 @@ end
 
 
 
+=begin
+# Usage: ruby parse_tex.rb myfile.tex
+
+# Check if a filename is given
+if ARGV.empty?
+  puts "Usage: ruby #{__FILE__} filename.tex"
+  exit 1
+end
+
+filename = ARGV[0]
+
+# Check file exists
+unless File.exist?(filename)
+  puts "File not found: #{filename}"
+  exit 1
+end
+
+# Read the entire file
+content = File.read(filename)
+parse_tex(content)
+=end

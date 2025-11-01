@@ -41,7 +41,7 @@ defaults:
       layout: default
       permalink: categories/:category/
 
-
+# The configuration for the sciblog plugin
 sciblog:
   envs:
     theorem:
@@ -52,6 +52,8 @@ sciblog:
       proofname: proof
       side-content: false
       display-mode: overlay
+      start-hidden: true
+      style: dark
     exercise:
       countby: section
       proofname: solution
@@ -60,13 +62,13 @@ sciblog:
       proofname: prooof
     equation:
       countby: section
-    side-notes:
-      countby: section
     note:
       countby: document
       label-without-acronym: true
-      side-content: true
+      # side-content: true
+      display-mode: side
       start-hidden: true
+      style: cyberpunk
 
 # Exclude from processing.
 # The following items will not be processed, by default.

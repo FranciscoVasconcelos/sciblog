@@ -1,0 +1,51 @@
+
+pretty-box {
+  display: block;
+  margin: 20px 0;
+}
+pretty-box .box {
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  background: linear-gradient(145deg, #e0f7fa, #f1f8e9);
+  position: relative;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+pretty-box .header {
+  font-size: 19px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #004d40;
+  border-bottom: 2px solid #26a69a;
+}
+pretty-box .content {
+  margin-top: 10px;
+  color: #333;
+}
+pretty-box .hide-button {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: linear-gradient(90deg, #26a69a, #80cbc4);
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: opacity 0.2s ease;
+}
+pretty-box .hide-button:hover {
+  opacity: 0.8;
+}
+pretty-box .hide-button::before {
+  content: "Hide";
+}
+pretty-box a {
+  color: #00796b;
+  font-weight: 600;
+  text-decoration: none;
+}
+pretty-box a:hover {
+  color: #004d40;
+}

@@ -206,6 +206,11 @@ def load_replace(filename, replacement)
   content.gsub('pretty-box', replacement)
 rescue Errno::ENOENT
   puts "Error: File '#{filename}' not found"
+  dir = File.dirname(filename)
+  files = Dir.entries(dir).select { |x| File.file?(File.join(dir, x)) }
+  names = files.map { |x| File.basename(x, File.extname(x)) }
+  puts "Must chose one of the available styles:"
+  puts names
   nil
 rescue => e
   puts "Error reading file: #{e.message}"
@@ -228,11 +233,14 @@ module Jekyll
 
       @envname = tag_name
       @label = named['label'] || positional[0]
-      @proof = named['showproof'] || positional[1] == 'true' 
-      @side = named['side-content'] || positional[2]
-      @display_mode = named['display_mode'] || positional[3]
-      
-      puts tag_name
+      @proof = (named['showproof'] || positional[1]) == 'true' 
+      # @side = named['side-content'] || positional[2]
+      @display_mode = named['display_mode'] || positional[2]
+      @title = named['title'] || positional[3]
+      # puts tag_name
+      # puts named['title'] if named['title'] 
+      # puts ''
+
     end
     def render(context)
       page = context.registers[:page]
@@ -260,20 +268,15 @@ module Jekyll
       template = Liquid::Template.parse(content)
       rendered = template.render(context)
       
+      @title = "(#{@title})" if @title
       label_str = "\##{label_str.sub(/.*?-/, "")}" if site.config[@envname]["label-without-acronym"]
-      header =  %(#{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a>)
+      header =  %(#{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a> <i>#{@title}</i>)
       hidden = site.config[@envname]['start-hidden']
-      @display_mode = site.config[@envname]['display-mode'] || 'inline' if !@display_mode 
+      @display_mode = site.config[@envname]['display-mode'] || 'inline' if @display_mode == nil 
       out = generateHTMLenv(@envname,anchor,header,%(#{rendered}\n#{linkproof}),hidden,@display_mode)
       
-      if @side == nil
-        @side = site.config[@envname]['side-content']
-      elsif @side == 'true'
-        @side = true
-      end
-
-      if @side
-        raise "To use side note you must set layout:side-notes" if page['layout'] != "side-notes"
+      if @display_mode == 'side'
+        raise "To use side display mode you must set layout:side-notes" if page['layout'] != "side-notes"
         # Store the content for later rendering
         page['side-notes'] ||= ''
         page['side-notes'] << out
@@ -346,14 +349,16 @@ module Jekyll
 
       positional, named = parse_params(markup)
       @label = positional[0] || named["label"]
+      @popup = (positional[1] || named["popup"]) == 'true'
 
       # Must give error if @label is nil
     end
 
     def render(context)
-     
+      className = ''
+      className = " class='popup'" if @popup
       <<~HTML
-      <mathlabel>math-ref-#{@label}</mathlabel>
+      <mathlabel#{className}>math-ref-#{@label}</mathlabel>
       HTML
 
     end
@@ -800,13 +805,15 @@ module Jekyll
       end
       
       positional, named = parse_params(markup)
-      location = named["location"]
+      @here = positional[0] == 'here'
+      
+      # location = named["location"]
           
     end
     def render(context)
       page = context.registers[:page]
       original_path = page['path']  # "_posts/path/to/post.md"
-      tex_path = transform_path_to_tex(original_path)
+      tex_path = @here ? "#{original_path.sub(/\..*$/, '')}.tex" : transform_path_to_tex(original_path)
       content = File.read(tex_path, encoding: 'utf-8')
 
       converted = parse_tex(content)
@@ -881,8 +888,8 @@ end
 def AppendAllEnvStyles(site,post)
   envs = site.config["sciblog"]["envs"]
   content = envs.map do |key, value|
-    # Add the default style 
-    load_replace('_plugins/extra/default.css',".#{key}-box")
+    style = site.config[key]['style'] || 'ugly'
+    load_replace("_plugins/extra/styles/#{style}.css",".#{key}-box")
   end.join("\n")
   html = post.output
   html.sub!(/<\/body>/,"<style>#{content}</style></body>")
@@ -1113,16 +1120,18 @@ end
 
 def setReference(post,ref)
   html = post.output
-  html = html.gsub(/<mathlabel>(.*?)<\/mathlabel>/m) do
-    key = Regexp.last_match(1).strip
-    
+  # html = html.gsub(/<mathlabel>(.*?)<\/mathlabel>/m) do
+  html.gsub!(/<mathlabel(.*?)>(.*?)<\/mathlabel>/m) do |match|
+    # key = Regexp.last_match(1).strip
+    extra = $1
+    key = $2.strip
     # Check if key exists
     if ref.key?(key)
       equrl = ref[key]['url']
       label = "#{ref[key]['label']}"
 
       # Return an anchor link
-      %(<a style="color:blue; text-decoration:none" href="#{equrl}">#{label}</a>) 
+      %(<a style="color:blue; text-decoration:none" href="#{equrl}"#{extra}>#{label}</a>) 
     else
       raise "Key #{key} does not exist"
     end
@@ -1210,15 +1219,6 @@ def getContentExtra()
   HTML
 end
 
-def getBalloonStyle()
-  plugin_dir = File.expand_path("extra", __dir__)
-  css_content = File.read(File.join(plugin_dir, "balloon.css"))
-  
-  <<~HTML
-  <style>#{css_content}</style>
-  HTML
-end
-
 # Get the latex commands 
 def getLatexCommands()
   dir = File.expand_path("../",__dir__)
@@ -1247,7 +1247,6 @@ Jekyll::Hooks.register :site, :post_render do |site|
   js_content  = appendPostsUrlVar(site,"repeat.js")
   extra_content = getContentExtra()
   commands = getLatexCommands()
-  ballon_style = getBalloonStyle()
   ref = site.config['ref']
 
   # Iterate over all posts
@@ -1261,7 +1260,6 @@ Jekyll::Hooks.register :site, :post_render do |site|
       injectAtEndBody(post,js_content)
       injectAtEndBody(post,extra_content)
       injectAtBeginBody(post,commands)
-      injectAtBeginBody(post,ballon_style)
       AppendAllEnvStyles(site,post)
     end
   end

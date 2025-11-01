@@ -1,0 +1,80 @@
+
+pretty-box {
+  display: block;
+  margin: 20px 0;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.5px;
+}
+pretty-box .box {
+  position: relative;
+  border: 2px solid #0ff;
+  border-radius: 10px;
+  padding: 16px;
+  background: radial-gradient(circle at top left, #111 0%, #000 100%);
+  color: #0ff;
+  text-shadow: 0 0 6px rgba(0,255,255,0.8);
+  box-shadow: 0 0 10px rgba(0,255,255,0.4), 0 0 25px rgba(255,0,255,0.2);
+  overflow: hidden;
+}
+pretty-box .box::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid rgba(255,0,255,0.4);
+  border-radius: 10px;
+  pointer-events: none;
+  animation: pulse-glow 3s infinite alternate;
+}
+@keyframes pulse-glow {
+  from { box-shadow: 0 0 8px rgba(255,0,255,0.3), 0 0 15px rgba(0,255,255,0.2); }
+  to { box-shadow: 0 0 20px rgba(255,0,255,0.6), 0 0 40px rgba(0,255,255,0.4); }
+}
+pretty-box .header {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #f0f;
+  padding-bottom: 5px;
+  color: #ff00ff;
+  text-shadow: 0 0 8px #ff00ff;
+}
+pretty-box .content {
+  margin-top: 10px;
+  color: #00ffff;
+}
+pretty-box .hide-button {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: linear-gradient(90deg, #ff00ff, #00ffff);
+  color: black;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  box-shadow: 0 0 10px rgba(255,0,255,0.5), 0 0 20px rgba(0,255,255,0.5);
+  transition: all 0.3s ease;
+}
+pretty-box .hide-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255,0,255,0.8), 0 0 40px rgba(0,255,255,0.6);
+}
+pretty-box .hide-button::before {
+  content: "Hide";
+}
+pretty-box a {
+  color: #00ffff;
+  text-decoration: none;
+  font-weight: bold;
+  text-shadow: 0 0 5px #0ff;
+  transition: all 0.2s ease;
+}
+pretty-box a:hover {
+  color: #ff00ff;
+  text-shadow: 0 0 10px #ff00ff, 0 0 20px #0ff;
+}

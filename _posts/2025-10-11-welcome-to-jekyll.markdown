@@ -34,6 +34,7 @@ A = \int\sum_k a_k(x)v_k(x,y)dx
 $$
 {% endenvproof %}
 
+**These are equations on a grid:**
 {% gridequations ncols=2 %}
 \begin{split}
 E = mc^2\\\EE = mc^2
@@ -48,7 +49,18 @@ This is some text with{% note %} This is the text of the side note. With an equa
 
 Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
 
-some text{% note %} Let us try another fucking side note. I want to see if this goes away {% endnote %}
+
+
+some text{% note %} Let us try another fucking side note. I want to see if this goes away 
+{% theorem theo:7666 %}
+This is a theorem inside of a side note. This is some equation inside a theorem inside a side note 
+
+{% equation eq:9999 %}
+A = \int \mathcal{L}(\phi,\dot{\phi})\ dt
+{% endequation %}
+
+{% endtheorem %}
+{% endnote %}
 
 
 test some other text{% note %} This is an inline note numbered by the entire document {% endnote %}
@@ -69,5 +81,7 @@ some other equation with a new tag
 {% endlemma %}
 
 
-This is a link for the lemma {% ref lemma:this:theorem %}
+This is a link with a popup attached: {% ref lemma:this:theorem popup=true %}
+
+{% includetex here %}
 
