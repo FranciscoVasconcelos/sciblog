@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+# encoding: utf-8
 # Convert LaTeX environments and commands to Liquid tags in Markdown files.
 
 # require 'debug'  # Must be at the top or before code you want to debug
@@ -12,6 +14,10 @@ $env_pattern = /
   (?<content>.*?)                           # environment content
   \\end\{\k<name>\}                         # matching \end{...}
 /mxs
+# Pattern for single argument command 
+$command_pattern = /\\(?<command>\w+)(?:\{(?<arg>[^}]*)\})?/ 
+# Command that I want to be converted from latex to liquid
+$liquid_commands = {"ref"=>"ref"}
 
 $section_levels = {
   'section' => 1,
@@ -139,6 +145,8 @@ def parse_tex(content)
   # Remove all labels from the content
   content = convert_latex_commands(content)
   content.gsub!($label_pattern,"")
+  # puts "CONTENT:"
+  # puts content
   return content
 end
 
@@ -147,14 +155,16 @@ end
 
 def convert_latex_commands(content)
 
-  liquid_commands = {"ref"=>"ref"}
-
-  commands_pattern = /\\(ref)\{([^}]+)\}/
-  content.gsub!(commands_pattern).each do |match|
-    command = $1
-    argument = $2
-    liquid_command = liquid_commands[command]
-    "{% #{liquid_command} #{argument} %}"
+  content.gsub!($command_pattern).each do
+    match = Regexp.last_match
+    command = match[:command]
+    argument = match[:arg]
+    liquid_command = $liquid_commands[command]
+    if liquid_command == nil 
+      "\\#{command}\{#{argument}\}"
+    else
+      "{% #{liquid_command} #{argument} %}"
+    end
   end
   return content
 end

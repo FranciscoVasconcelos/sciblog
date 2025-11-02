@@ -46,3 +46,10 @@ Inplace, side and popup need a link to be displayed.
 display-mode: inplace/overlay/side/popup (default: inplace)
 
 
+The user can make a link to have a pop-up appears on hover. Just use the ref tag with `popup=true` passed as an argument: 
+
+```markdown
+{% ref label:to:something popup=true %}
+```
+
+
