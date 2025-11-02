@@ -949,7 +949,7 @@ module ExtraPages
       generated_pages = []
 
       Dir.glob(File.join(extra_posts_dir, "*.html")).each do |html_file|
-        html = File.read(html_file)
+        html = File.read(html_file).force_encoding('UTF-8')
         html.sub!(/<div class="sidenav" id="sidenav">(.*?)<\/div>/m,generate_sidenav(site))
         html.sub!(/<startPage>/m,"'#{baseurl}'")
 
