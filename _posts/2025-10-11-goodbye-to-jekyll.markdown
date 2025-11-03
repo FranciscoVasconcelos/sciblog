@@ -124,7 +124,6 @@ some text here.
 {% endequation %}
 
 {% endsubequations %}
-And if I add <a href="www.fuck.com">this</a>
 
 {% endenvproof %}
 

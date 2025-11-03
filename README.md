@@ -52,4 +52,6 @@ The user can make a link to have a pop-up appears on hover. Just use the ref tag
 {% ref label:to:something popup=true %}
 ```
 
+## TODO 
 
+- [ ] On hover links with popup the layout/style of all the content gets fucked (It does not happen when the element is in the current page)

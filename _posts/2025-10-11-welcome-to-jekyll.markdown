@@ -13,7 +13,7 @@ acronym: P
 
 {% ref def:this:coco %}
 
-This → {% ref some-label %} is a link to a section on other page
+This → {% ref some-label popup=true %} is a link to a section on other page
 
 This is a link to an equation {% ref eq:pi:3 %}
 
@@ -85,3 +85,6 @@ This is a link with a popup attached: {% ref lemma:this:theorem popup=true %}
 
 {% includetex here %}
 
+
+**This is a repeated theorem from another page**
+{% repeat theo:this:theorem %}

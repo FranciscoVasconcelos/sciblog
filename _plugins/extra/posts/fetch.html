@@ -102,6 +102,8 @@
     const results = document.getElementById('results');
     const addedClasses = [];
 
+    // console.log(postsLinks);
+
     function anyEndsWith(suffix, strings) {
       return strings.some(string => string.endsWith(suffix));
     }
@@ -109,18 +111,17 @@
     function capitalizeFirstLetter(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
-    function fetchElements(rel_url,button){
+    function fetchElements(relativePath,button){
       if(fetchedButtons.includes(button)) return;
 
 	    const origin = window.location.origin;
-      const url = origin + rel_url;
+      const url = origin + relativePath;
       if(!url){
         console.log("The fuck. This is not suppose to happen....");
         return;
       }
 
-      hiddenIframe.onload = function() {
-        const iframeDoc= hiddenIframe.contentDocument || hiddenIframe.contentWindow.document;
+      callback = function(iframeDoc) {
         const classNames = iframeDoc.querySelectorAll('[class]');
     
         classNamesList = [];
@@ -144,8 +145,8 @@
             child.value = elem;
             child.addEventListener("click",function(){
               if(!addedClasses.includes(elem+button.textContent)){
-                addElements(elem);
-                addedClasses.push(elem+button.textContent);
+                addElements(relativePath,elem);
+                addedClasses.push(elem + button.textContent);
               }
             });
             content.appendChild(child);
@@ -162,33 +163,40 @@
           content.classList.toggle("active");
       }
       
-      // Set the Iframe url
-      hiddenIframe.src = url;
+      iframesHandler.setOnIframeLoad(relativePath,callback); 
+
       fetchedButtons.push(button);
     }
 
-    function addElements(className){
-      const iframeDoc = hiddenIframe.contentDocument || hiddenIframe.contentWindow.document;
-      const elements = iframeDoc.getElementsByClassName(className);
-      if (elements.length === 0) {
-          console.log(`No elements found with class "${className}"`, 'info');
-      } else {
-          displayElements(elements, className,iframeDoc);
-      }
+    function addElements(relativePath,className){
+      iframesHandler.setOnGetElemsByClassName(relativePath,className, (elements) => {
+        Array.from(elements).forEach((el) => el.classList.remove('overlay'));
+        if (elements.length === 0) {
+            console.log(`No elements found with class "${className}"`);
+        } else {
+            displayElements(elements);
+        }
+      });
     }
 
-    function displayElements(elements, className,iframeDoc) {
+    function displayElements(elements) {
          const elementsList = document.getElementById('elementsList');
-
-        // Inject CSS at the beginning 
-        extractAndInjectCSS(hiddenIframe);
-
+         
+        // Display elements followed by their respective proofs
         for (let i = 0; i < elements.length; i++){
           id = elements[i].id
-          if(id.endsWith(":proof")) continue;
-          elem = iframeDoc.getElementById(`${id}:proof`);
+          // Do not repeat repeated content
+          if(id.endsWith("-repeat-repeat") || id.endsWith(":proof")) continue;
+
+          elements[i].style.display = 'block';
           elementsList.appendChild(elements[i]);
-          if(elem) elementsList.appendChild(elem);
+
+          // Find the corresponding proof
+          elemProof = elements.find(el => el.id === `${id}:proof`);
+          if(elemProof){ 
+            elemProof.style.display = 'block';
+            elementsList.appendChild(elemProof);
+          }
         }
     }
 

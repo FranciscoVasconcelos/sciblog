@@ -1210,11 +1210,10 @@ def getContentExtra()
   plugin_dir = File.expand_path("extra", __dir__)
   
   css_content = File.read(File.join(plugin_dir, "link-highlight.css"))
-  js_content = File.read(File.join(plugin_dir, "box.js"))
+  # js_content = File.read(File.join(plugin_dir, "box.js"))
   html_content = File.read(File.join(plugin_dir, "mathjax.html"))
   
   <<~HTML
-  <script>#{js_content}</script>
   <style>#{css_content}</style>
   #{html_content}
   HTML
