@@ -225,14 +225,16 @@ function handleSideNotes(target){
 
 window.addEventListener('resize', function() {
   const container = document.getElementById('side-notes-container');
-  resolveOverlaps(container.children);
+  if (container !== null && container !== undefined)   
+    resolveOverlaps(container.children);
 });
 
 // Set the side-notes as invisible
 const container = document.getElementById('side-notes-container');
-Array.from(container.children).forEach(elem =>{
-  elem.style.display = 'none';
-});
+if (container !== null && container !== undefined)   
+  Array.from(container.children).forEach(elem =>{
+    elem.style.display = 'none';
+  });
 
 
 // Initialize when DOM is ready

@@ -1,3 +1,39 @@
+function extractAndInjectCSS(iframe) {
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const styles = [];
+  const cssContainer = document.createElement('div');
+
+  const styleSheets = iframeDoc.styleSheets;
+  for (let i = 0; i < styleSheets.length; i++) {
+    try {
+      const sheet = styleSheets[i];
+      if (sheet.href) {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = sheet.href;
+        styles.push(link.outerHTML);
+      } else if (sheet.cssRules) {
+        let cssText = '';
+        for (let j = 0; j < sheet.cssRules.length; j++) {
+          cssText += sheet.cssRules[j].cssText + '\n';
+        }
+        if (cssText) styles.push(`<style>${cssText}</style>`);
+      }
+    } catch(e) {}
+  }
+
+  iframeDoc.querySelectorAll('style').forEach(tag => {
+    styles.push(tag.outerHTML);
+  });
+
+  const cssContent = styles.join('\n');
+  if (cssContent) {
+    cssContainer.innerHTML = cssContent;
+    document.head.appendChild(cssContainer);
+  }
+}
+
+
 class ElementHandler {
   constructor(links) {
     this.iframes = {};
@@ -7,40 +43,6 @@ class ElementHandler {
     }
   }
 
-  extractAndInjectCSS(iframe) {
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-    const styles = [];
-    const cssContainer = document.createElement('div');
-
-    const styleSheets = iframeDoc.styleSheets;
-    for (let i = 0; i < styleSheets.length; i++) {
-      try {
-        const sheet = styleSheets[i];
-        if (sheet.href) {
-          const link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = sheet.href;
-          styles.push(link.outerHTML);
-        } else if (sheet.cssRules) {
-          let cssText = '';
-          for (let j = 0; j < sheet.cssRules.length; j++) {
-            cssText += sheet.cssRules[j].cssText + '\n';
-          }
-          if (cssText) styles.push(`<style>${cssText}</style>`);
-        }
-      } catch(e) {}
-    }
-
-    iframeDoc.querySelectorAll('style').forEach(tag => {
-      styles.push(tag.outerHTML);
-    });
-
-    const cssContent = styles.join('\n');
-    if (cssContent) {
-      cssContainer.innerHTML = cssContent;
-      document.head.appendChild(cssContainer);
-    }
-  }
 
   parseURL(url) {
     try {
@@ -67,6 +69,89 @@ class ElementHandler {
     return this.renameIdsRecursively(elem.cloneNode(true));
   }
 
+  
+  setOnIframeLoad(url,callback){
+    const { domain, relativePath, anchor } = this.parseURL(url);
+    // Check if is the current webpage
+    if(window.location.pathname === relativePath){
+      // return this webpage frame
+      callback(document);
+      return;
+    }
+    const iframe = this.iframes[relativePath];
+    if(!iframe) {
+      console.log(`iframe not found for the given path: ${relativePath}`);
+      callback(null);
+      return;
+    }
+    
+    // Check if the iframe is alredy loaded
+    const loaded = iframe.contentDocument && iframe.contentDocument.readyState === 'complete';
+
+    if(!loaded) {
+      // Load the iframe
+      iframe.addEventListener('load', () => {
+        extractAndInjectCSS(iframe);
+        if(iframe.contentDocument || iframe.contentWindow.document)
+          callback(iframe);// Return the iframe
+        else callback(null);
+      });
+
+      iframe.className = "iframe-container";
+      iframe.style.display = 'none';
+      iframe.src = domain + relativePath;
+      document.body.appendChild(iframe);
+
+    }else{
+      if(iframe.contentDocument || iframe.contentWindow.document){
+        callback(iframe);
+        return;
+      }else callback(null);
+    }
+
+  }
+
+  setOnGetElemByClassCallback(url,className,callback) {
+    const { domain, relativePath, anchor } = this.parseURL(url);
+
+    const iframe = this.iframes[relativePath];
+    if(!iframe) {
+      console.log(`iframe not found for the given path: ${relativePath}`);
+    }
+    
+    // Check if the iframe is alredy loaded
+    const loaded = iframe.contentDocument && iframe.contentDocument.readyState === 'complete';
+
+    if(!loaded) {
+      iframe.addEventListener('load', () => {
+        extractAndInjectCSS(iframe);
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        if(iframeDoc){
+          console.log("Getting the element from iframe on load.");
+          elems = iframeDoc.getElementsByClassName(className)
+          if(elems.length > 0)
+            callback(Array.from(elems).map(el => this.renameIdsRecursively(el.cloneNode(true))));
+          else callback(null);
+        }
+      });
+
+      iframe.className = "iframe-container";
+      iframe.style.display = 'none';
+      iframe.src = domain + relativePath;
+      document.body.appendChild(iframe);
+
+    }else {
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      if(iframeDoc){
+          console.log(`Getting the elements of class ${className} from iframe after load.`);
+          elem = iframeDoc.getElementsByClassName(className);
+          if(elems.length > 0)
+            callback(Array.from(elems).map(el => this.renameIdsRecursively(el.cloneNode(true))));
+          else callback(null);
+      }
+    }
+  }
+
   SetOnGetElementCallback(url,callback) {
     const { domain, relativePath, anchor } = this.parseURL(url);
     // Check if this element exists in this webpage
@@ -89,7 +174,7 @@ class ElementHandler {
 
     if(!loaded) {
       iframe.addEventListener('load', () => {
-        this.extractAndInjectCSS(iframe);
+        extractAndInjectCSS(iframe);
         const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
         if(iframeDoc){
           console.log("Getting the element from iframe on load.");

@@ -952,8 +952,8 @@ module ExtraPages
         html.sub!(/<div class="sidenav" id="sidenav">(.*?)<\/div>/m,generate_sidenav(site))
         html.sub!(/<startPage>/m,"'#{baseurl}'")
 
-        html.sub!(/<\/body>/, "#{extra_content}</body>")
-        html.sub!(/<\/body>/, "#{js_content}</body>")
+        html.sub!(/<body>/, "<body>#{extra_content}")
+        html.sub!(/<body>/, "<body>#{js_content}")
         basename = File.basename(html_file, '.html')
         page = CategoryPage.new(site, basename,html,basename.capitalize)
         site.pages << page

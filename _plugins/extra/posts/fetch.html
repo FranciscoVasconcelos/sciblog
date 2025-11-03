@@ -101,6 +101,11 @@
     const fetchedButtons = [];
     const results = document.getElementById('results');
     const addedClasses = [];
+
+    function anyEndsWith(suffix, strings) {
+      return strings.some(string => string.endsWith(suffix));
+    }
+
     function capitalizeFirstLetter(str) {
       return str.charAt(0).toUpperCase() + str.slice(1);
     }
@@ -122,8 +127,11 @@
         // Get all class names ending with "-box"
         classNames.forEach(elem => {
           className = elem.className;
-          if(typeof className == 'string' && className.endsWith("-box"))
-            classNamesList.push(className.split(" ")[0]);
+          if(typeof className == 'string'){
+            // Get any that ends with '-box'
+            let classes = className.split(' ').filter(str => str.endsWith("-box"));
+            if(classes.length > 0) classNamesList.push(classes[0]);
+          }
           });
           // Remove repeated elements
           classNamesList = classNamesList.filter((item, index, array) => array.indexOf(item) === index);
