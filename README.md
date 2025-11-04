@@ -57,6 +57,7 @@ or
 - [ ] Nicer pop-up?
 - [ ] Default configuration file.
 - [ ] Repeatable sections and subsections? 
+- [ ] Hide envs on deselect envs in `fetch.html`
 
 ### IMPORTANT 
 
