@@ -32,21 +32,58 @@ const params = new URLSearchParams(window.location.search);
 numberSplits = params.get('split');
 
 if(numberSplits === null) numberSplits = 2;
-console.log(numberSplits);
+console.log("Number of splits:",numberSplits);
 
 const StartPage = <startPage>;
 const iframesList = []
 let listener = null;
 let loaded = new Array(numberSplits).fill(false);
 
+(function() {
+  const originalAdd = EventTarget.prototype.addEventListener;
+  const originalRemove = EventTarget.prototype.removeEventListener;
+
+  const listeners = new WeakMap();
+
+  EventTarget.prototype.addEventListener = function(type, callback, options) {
+    if (!listeners.has(this)) listeners.set(this, []);
+    listeners.get(this).push({ type, callback, options });
+    originalAdd.call(this, type, callback, options);
+  };
+
+  EventTarget.prototype.removeAllListeners = function(type) {
+    const list = listeners.get(this);
+    console.log(list);
+    if (!list) return;
+
+    list.forEach(({ type: t, callback, options }) => {
+      if (!type || t === type) {
+        originalRemove.call(this, t, callback, options);
+      }
+    });
+
+    if (type) {
+      listeners.set(this, list.filter(l => l.type !== type));
+    } else {
+      listeners.delete(this);
+    }
+  };
+})();
+
 // Add all of the iframes to the body
 for(let i = 0; i < numberSplits; i++){
   const iframe = document.createElement("iframe");
+
   iframe.id = `iframe${i}`;
   // Wait for all the iframes to load
   iframe.addEventListener('load',() => {
     loaded[i] = true;
     console.log(iframe.contentWindow.location.href);
+
+    const iframeDoc = iframe.contentWindow.document;
+    iframeDoc.defaultView.EventTarget.prototype.addEventListener = EventTarget.prototype.addEventListener;
+    iframeDoc.defaultView.EventTarget.prototype.removeAllListeners = EventTarget.prototype.removeAllListeners;
+
     if(loaded.every(value => value === true)) initialize(iframesList);
   });
   iframe.src = StartPage;
@@ -54,55 +91,86 @@ for(let i = 0; i < numberSplits; i++){
   document.body.appendChild(iframe);
 }
 
+function getHash(e){
+  const a = e.target.closest('a');
+  if(!a) return null;
+
+  const href = a.getAttribute('href');
+  if(!href) return null;
+
+  // Get the hash from the href's url
+  const parts = href.split('#');
+  const hash = parts.length > 1 ? '#' + parts[1] : ''; 
+  if(!hash) return null;
+  return hash;
+}
+
+
 function addIntercept(iframesList){
-  // Listener to scroll all iframes into view
-  const listener = e => {
-    const a = e.target.closest('a');
-    if(!a) return;
-
-    const href = a.getAttribute('href');
-    if(!href) return;
-
-    // Get the hash from the href's url
-    const parts = href.split('#');
-    const hash = parts.length > 1 ? '#' + parts[1] : ''; 
-
-    if(hash){
-      iframesList.forEach(iframe => {
-        const targetDoc = iframe.contentWindow.document;
+  // Listeners to scroll all iframes into view
+  iframesList.forEach(iframe => {
+    let listener = e => {
+      hash = getHash(e);
+      if(!hash) return;
+      iframesList.forEach(iiframe => {
+        const targetDoc = iiframe.contentWindow.document;
         const target = targetDoc.getElementById(hash.slice(1));
 
         if(target){
           e.preventDefault();
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          // trigger :target animation by changing hash
-
-          // Use dummy to not temporarily go to the beggining of the webpage!
-          iframe.contentWindow.location.hash = "#dummy";
-          // Force a slight delay to let browser repaint
-          setTimeout(() => {
-            iframe.contentWindow.location.hash = hash;
-          }, 0);
+          if(e.button === 0 || (e.button === 1 && iiframe !== iframe)){
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // trigger :target animation by changing hash
+            // Use dummy to not temporarily go to the beggining of the webpage!
+            iiframe.contentWindow.location.hash = "#dummy";
+            // Force a slight delay to let browser repaint
+            setTimeout(() => {
+              iiframe.contentWindow.location.hash = hash;
+            }, 0);
+          }
         }
       });
-    }
-  }
-  
-  iframesList.forEach(iframe => {
-    iframe.contentWindow.document.addEventListener('click',listener);
+    };
+
+    let preventDefaultListener = (e) => {
+      hash = getHash(e);
+      if(!hash) return;
+      iframesList.forEach(iiframe => {
+        const targetDoc = iiframe.contentWindow.document;
+        const target = targetDoc.getElementById(hash.slice(1));
+        if(target) e.preventDefault();
+      });
+    };
+
+    iframe.contentWindow.document.addEventListener('mousedown',listener);
+    iframe.contentWindow.document.addEventListener('click',preventDefaultListener);
+    iframe.contentWindow.document.addEventListener('auxclick',preventDefaultListener);
   });
-  return listener;
+
+ 
+
+  // return listener;
 }
 
 function removeListeners(iframesList,listener){
   iframesList.forEach(iframe => {
     iframe.contentWindow.document.removeEventListener('click',listener);
+    iframe.contentWindow.document.removeEventListener('mousedown',listener);
+  });
+}
+
+function removeAllListeners(iframesList){
+  iframesList.forEach(iframe => {
+    iframe.contentWindow.document.removeAllListeners('click');
+    iframe.contentWindow.document.removeAllListeners('mousedown');
   });
 }
 
 function initialize(iframesList){
-  if(listener) removeListeners(iframesList,listener);
-  listener = addIntercept(iframesList);
+  // if(listener) removeListeners(iframesList,listener);
+  removeAllListeners(iframesList);
+  // listener = 
+  addIntercept(iframesList);
 }
 
 </script>

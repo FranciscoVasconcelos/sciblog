@@ -63,6 +63,11 @@
       color: white;
     }
 
+    .activated{
+      background-color: #ff2b2b;
+      color: white;
+    }
+
     /* Dropdown container (hidden by default) */
     .dropdown-container {
       display: none;
@@ -89,9 +94,12 @@
   <div class="sidenav" id="sidenav"></div>
 
   <div class="main">
-    <h2>Simple Dropdown Menu</h2>
-    <p>Click on the dropdown buttons in the sidebar to see the dropdown content.</p>
-    <p>This example uses the exact styling you provided for a clean, simple dropdown menu.</p>
+    <h1>Fetch</h1>
+      <div id='instructions'>
+        <p>Click the dropdown buttons in the sidebar to show the elements that are rendered in each different post.</p>
+        <p>Clicking on the posts will show a list of environment types created in that post.  </p>
+        <p>Click in each <i>environment type</i> to hide/show the content.  </p>
+      </div>
     <div id="elementsList"></div>
   </div>
 
@@ -101,8 +109,8 @@
     const fetchedButtons = [];
     const results = document.getElementById('results');
     const addedClasses = [];
-
-    // console.log(postsLinks);
+    const addedElements = {};
+    const activeClasses = {};
 
     function anyEndsWith(suffix, strings) {
       return strings.some(string => string.endsWith(suffix));
@@ -143,11 +151,15 @@
             child.className = "dropdown-btn";
             child.textContent = capitalizeFirstLetter(elem.replace("-box",""));
             child.value = elem;
+                    
             child.addEventListener("click",function(){
-              if(!addedClasses.includes(elem+button.textContent)){
+              if(!addedClasses.includes(elem + relativePath)){
                 addElements(relativePath,elem);
-                addedClasses.push(elem + button.textContent);
-              }
+                addedClasses.push(elem + relativePath);
+              } else toggleElements(relativePath,elem);
+              child.classList.toggle('activated');
+              // Hide the instructions
+              document.getElementById("instructions").style.display = 'none';
             });
             content.appendChild(child);
           });
@@ -175,8 +187,24 @@
             console.log(`No elements found with class "${className}"`);
         } else {
             displayElements(elements);
+            addedElements[relativePath] ??= {};
+            addedElements[relativePath][className] = elements;
+            activeClasses[relativePath] ??= {};
+            activeClasses[relativePath][className] = true;
         }
       });
+    }
+
+    function toggleElements(relativePath,className){
+      const elements = addedElements[relativePath][className];
+      if(activeClasses[relativePath][className]){
+        Array.from(elements).forEach(el => el.style.display = 'none');
+        activeClasses[relativePath][className] = false;
+      }
+      else {
+        Array.from(elements).forEach(el => el.style.display = 'block');
+        activeClasses[relativePath][className] = true;
+      }
     }
 
     function displayElements(elements) {

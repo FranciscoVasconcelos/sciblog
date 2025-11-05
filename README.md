@@ -57,7 +57,10 @@ or
 - [ ] Nicer pop-up?
 - [ ] Default configuration file.
 - [ ] Repeatable sections and subsections? 
-- [ ] Hide envs on deselect envs in `fetch.html`
+- [x] Hide envs on deselect envs in `fetch.html`
+
+- [x] Prevent the new tab to open when I press a link with middle mouse button
+- [ ] Second repeats will have the same id (Do I want that???)
 
 ### IMPORTANT 
 

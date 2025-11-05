@@ -232,10 +232,20 @@ function copyAllMatchingStylesToPage(element){
 
 function renameIdsRecursively(element, suffix = "-repeat") {
   if(element.id) element.id += suffix;
-
-  Array.from(element.children).forEach(child => {
-    renameIdsRecursively(child, suffix);
-  });
+  
+  // Rename the onclick functions
+  if(element.onclick){
+    const onclickValue = element.getAttribute('onclick');
+    if(onclickValue.includes('toggleContent')){
+      const newOnclickValue = onclickValue.replace(
+        /toggleContent\('([^']+)'\)/,
+        (_, captured) => `toggleContent('${captured}-repeat')`
+      );
+      element.setAttribute('onclick',newOnclickValue);
+    }
+  }
+  // Recursive call for each child
+  Array.from(element.children).forEach(child => renameIdsRecursively(child, suffix));
   return element;
 }
 
