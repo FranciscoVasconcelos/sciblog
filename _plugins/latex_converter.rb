@@ -76,7 +76,6 @@ def parse_recursive(content)
   tag_head = nil
   if matches.length > 0
     matches.each_with_index do |match,idx|
-      # puts "Parsing content #{idx}"
       if idx < matches.length-1
         labels, cleaned_content = parse_recursive(content[match[:end]...(matches[idx+1][:start])])
         bounds << [match[:end],matches[idx+1][:start]]
@@ -86,7 +85,6 @@ def parse_recursive(content)
       end
       tag_head = %({% section level=#{$section_levels[match[:type]]} header=\"#{match[:header]}\" #{labels} %})
       cleaned_content_out += %(#{tag_head}\n#{cleaned_content})
-      # puts match[1]
     end
   else
     matches = []
@@ -144,8 +142,6 @@ def parse_tex(content)
   # Remove all labels from the content
   content = convert_latex_commands(content)
   content.gsub!($label_pattern,"")
-  # puts "CONTENT:"
-  # puts content
   return content
 end
 

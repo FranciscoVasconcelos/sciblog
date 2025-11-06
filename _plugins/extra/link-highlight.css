@@ -72,3 +72,20 @@ div:target {
     animation: fadeIn 0.4s ease-out;
 }
 
+
+
+.grid-plot-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px; /* space between items */
+}
+
+.grid-plot-item {
+  flex: 1 1 calc(25% - 10px); /* 4 items per row, minus gap */
+  background-color: #ccc;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}

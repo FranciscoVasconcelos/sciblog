@@ -88,3 +88,6 @@ This is a link with a popup attached: {% ref lemma:this:theorem popup=true %}
 
 **This is a repeated theorem from another page**
 {% repeat theo:this:theorem %}
+
+
+{% includebson charts.msgpack cols=2 %}

@@ -24,7 +24,7 @@ The ability to write cross-referencing posts permits me to organise my notes eas
 Has a sidebar with buttons to fetch certain elements by the names defined in the config file.
 
 **`Split.html`** 
-The user can look at two posts at the same time. The link clicks are intercepted and both pages scroll to the link's content.
+The user can look at two posts at the same time. The link clicks are intercepted and both pages scroll to the link's content. Clicking the middle mouse button on a link will folow that link in all pages except the current (i.e. the one where the cursor has clicked the link)
 
 **Links with Popups**
 ```html
@@ -61,6 +61,9 @@ or
 
 - [x] Prevent the new tab to open when I press a link with middle mouse button
 - [ ] Second repeats will have the same id (Do I want that???)
+
+- [ ] Using `Chart.js` and flex boxes the content gets all fucked up. It does not adjust automatically.
+
 
 ### IMPORTANT 
 

@@ -586,6 +586,68 @@ function handleSideNotes(target){
   resolveOverlaps(container.children);
 }
 
+// Render charts inside of the parent container
+async function renderCharts(filename, parentId, numberCols) {
+    // Ensure Chart.js and MessagePack are available
+    if (typeof Chart === 'undefined') {
+        throw new Error("Chart.js is required but not found.");
+    }
+    if (typeof MessagePack === 'undefined' && typeof msgpack === 'undefined') {
+        throw new Error("MessagePack library is required but not found.");
+    }
+
+    // Use whichever global variable exists
+    const MsgPack = MessagePack || msgpack;
+
+    try {
+        // Fetch the MessagePack file as binary data
+        const response = await fetch(filename);
+        const arrayBuffer = await response.arrayBuffer();
+
+        // Decode MessagePack data
+        const decodedData = MsgPack.decode(new Uint8Array(arrayBuffer));
+
+        // Expecting decodedData to be an array of chart definitions
+        if (!Array.isArray(decodedData)) {
+            throw new Error("Expected MessagePack to contain an array of chart configurations.");
+        }
+
+        // Get parent element
+        const parent = document.getElementById(parentId);
+        if (!parent) {
+            throw new Error(`No element found with id "${parentId}".`);
+        }
+
+        // Iterate through each chart definition
+        decodedData.forEach((chartConfig, index) => {
+            // Create a container for the chart
+            const container = document.createElement('div');
+            // container.style.width = '45%';
+            container.style.flex = `1 1 calc(50% - 10px)`;
+            container.style.display = 'flex';
+            // container.style.justifyContent = 'center';
+            // container.style.alignItems = 'center';
+            // container.style.padding = '5px';
+
+            const content = parent.querySelector('.box').querySelector('.content');
+
+            const canvas = document.createElement('canvas');
+            canvas.id = `msgpack-chart-${index}`;
+            container.appendChild(canvas);
+            content.appendChild(container);
+
+            // Create chart instance
+            new Chart(canvas, {
+                type: chartConfig.type || 'line',
+                data: chartConfig.data,
+                options: chartConfig.options || {}
+            });
+        });
+    } catch (err) {
+        console.error("Failed to render MessagePack charts:", err);
+    }
+}
+
 const iframesHandler = new IframesHandler(postsLinks);
 const elements = document.getElementsByTagName('repeat-element');
 

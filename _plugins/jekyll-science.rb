@@ -235,56 +235,25 @@ module Jekyll
       @envname = tag_name
       @label = named['label'] || positional[0]
       @proof = (named['showproof'] || positional[1]) == 'true' 
-      # @side = named['side-content'] || positional[2]
       @display_mode = named['display_mode'] || positional[2]
       @title = named['title'] || positional[3]
-      # puts tag_name
-      # puts named['title'] if named['title'] 
-      # puts ''
+
 
     end
     def render(context)
-      page = context.registers[:page]
       site = context.registers[:site]
 
-      setupEnv(context,@envname)
-      label_str,equrl,number_str,anchor = genRef(context,@envname,@label)
-      # increment env counter 
-      context[@envname]["counter"] += 1
-        
-      id = "#{@envname}#{number_str.gsub('.','_')}" # Define a unique id
-
-      linkproof = ""
-      if @proof 
-        proofname = site.config[@envname]['proofname']
-        linkproof = 
-        <<~HTML
-        See <prooflabel>#{anchor}:proof</prooflabel>
-        HTML
-      end
-
+      
       content = super
-          
       # Render any Liquid inside it
       template = Liquid::Template.parse(content)
       rendered = template.render(context)
-      
+
       @title = "(#{@title})" if @title
-      label_str = "\##{label_str.sub(/.*?-/, "")}" if site.config[@envname]["label-without-acronym"]
-      header =  %(#{@envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a> <i>#{@title}</i>)
-      hidden = site.config[@envname]['start-hidden']
-      @display_mode = site.config[@envname]['display-mode'] || 'inline' if @display_mode == nil 
-      out = generateHTMLenv(@envname,anchor,header,%(#{rendered}\n#{linkproof}),hidden,@display_mode)
       
-      if @display_mode == 'side'
-        raise "To use side display mode you must set layout:side-notes" if page['layout'] != "side-notes"
-        # Store the content for later rendering
-        page['side-notes'] ||= ''
-        page['side-notes'] << out
-        return %(<sup><a style="text-decoration:none" href="#{equrl}">#{label_str.sub(/.*?-/, "").gsub('#','')}</a></sup>)
-      else 
-        return out
-      end
+      content,anchor = generateEnvironmentContent(context,@envname,rendered,@label,@display_mode,@title,@proof)
+      return content
+
     end
   end
 end
@@ -688,8 +657,6 @@ module Jekyll
 
       labels = named['labels'] || positional[0]
       @ncols = (named['ncols'] || positional[1]).to_i # Number of columns
-      # puts "@ncols"
-      # puts @ncols
       @ncols = 1 if @ncols == 0 || @ncols == nil
       if labels
         @labels = labels.split(";")
@@ -761,7 +728,6 @@ module Jekyll
         # Add the tags in a row
         html << "<div class='tag'>("
         for i in 0...j
-          # puts idx
           html << %(<a href="#{refDict[idx][:url]}" class="tag-link">#{refDict[idx][:label]}</a>,)
           idx += 1
         end
@@ -828,7 +794,79 @@ module Jekyll
   end
 end
 
+# Generate the environment content
+def generateEnvironmentContent(context,envname,content=nil,label=nil,display_mode=nil,title=nil,proof=nil)
+  page = context.registers[:page]
+  site = context.registers[:site]
 
+  setupEnv(context,envname)
+  label_str,equrl,number_str,anchor = genRef(context,envname,label)
+  # increment environment counter 
+  context[envname]["counter"] += 1
+
+
+  linkproof = ""
+  if proof 
+    proofname = site.config[envname]['proofname']
+    linkproof = 
+    <<~HTML
+      See <prooflabel>#{anchor}:proof</prooflabel>
+    HTML
+  end
+
+  
+  label_str = "\##{label_str.sub(/.*?-/, "")}" if site.config[envname]["label-without-acronym"]
+  header =  %(#{envname.capitalize}<a href="#{equrl}">&nbsp;#{label_str}</a> <i>#{title}</i>)
+  hidden = site.config[envname]['start-hidden']
+  display_mode = site.config[envname]['display-mode'] || 'inline' if display_mode == nil 
+
+  out = generateHTMLenv(envname,anchor,header,%(#{content}\n#{linkproof}),hidden,display_mode)
+  
+  if display_mode == 'side'
+    raise "To use side display mode you must set layout:side-notes" if page['layout'] != "side-notes"
+    # Store the content for later rendering
+    page['side-notes'] ||= ''
+    page['side-notes'] << out
+    return %(<sup><a style="text-decoration:none" href="#{equrl}">#{label_str.sub(/.*?-/, "").gsub('#','')}</a></sup>),anchor
+  else 
+    return out,anchor
+  end  
+end
+
+module Jekyll
+  class IncludeBson < Liquid::Tag
+    def initialize(tag_name, markup, tokens)
+      super
+      
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+      @filename = positional[0] || named['filename']
+      @numberCols = positional[1] || named['cols']
+      @label = positional[2] || named['label']
+      
+    end
+    def render(context)
+
+      page = context.registers[:page]
+      content,anchor = generateEnvironmentContent(context,'plot',content=nil,label=@label)
+     
+      js = 
+      <<~JS
+        renderCharts("/_posts.bson/#{@filename}","#{anchor}",#{@numberCols})
+      JS
+
+      page['render-bson'] ||= ''
+      page['render-bson'] << js
+
+      return content
+
+    end
+  end
+end
 
 Liquid::Template.register_tag('align',Jekyll::AlignLabel)
 Liquid::Template.register_tag('subequations',Jekyll::Subequations)
@@ -840,6 +878,8 @@ Liquid::Template.register_tag('gridequations', Jekyll::GridEquations)
 Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 Liquid::Template.register_tag('proofref', Jekyll::ProofRef)
 Liquid::Template.register_tag('includetex', Jekyll::IncludeTex)
+Liquid::Template.register_tag('includebson', Jekyll::IncludeBson)
+
 
 # Function to create JavaScript from collected notes
 def generate_javascript_notes(note)
@@ -1258,7 +1298,8 @@ Jekyll::Hooks.register :site, :post_render do |site|
       setProof(post,site)
       generateProof(post,site)
       injectAtEndBody(post,js_content)
-      injectAtEndBody(post,extra_content)
+      injectAtEndBody(post,"<script>#{post['render-bson']}</script>") # inject the render bson scripts
+      injectAtBeginBody(post,extra_content)
       injectAtBeginBody(post,commands)
       AppendAllEnvStyles(site,post)
     end
