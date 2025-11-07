@@ -90,4 +90,4 @@ This is a link with a popup attached: {% ref lemma:this:theorem popup=true %}
 {% repeat theo:this:theorem %}
 
 
-{% includebson charts.msgpack cols=2 %}
+{% includemsgpack test.msgpack cols=2 %}

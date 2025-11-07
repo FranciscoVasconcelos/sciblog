@@ -78,7 +78,7 @@ sciblog:
       style: blank
 
 include:
-  - "_posts.bson"
+  - "_posts.msgpack"
 
 # Exclude from processing.
 # The following items will not be processed, by default.

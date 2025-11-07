@@ -63,7 +63,7 @@ or
 - [ ] Second repeats will have the same id (Do I want that???)
 
 - [ ] Using `Chart.js` and flex boxes the content gets all fucked up. It does not adjust automatically.
-
+- [ ] Include msgpack tag is being called with path=> `_posts/research/2025-11-07-my-research-note.md/#excerpt` and filename=> `test.msgpack`
 
 ### IMPORTANT 
 

@@ -779,7 +779,7 @@ module Jekyll
     end
     def render(context)
       page = context.registers[:page]
-      original_path = page['path']  # "_posts/path/to/post.md"
+      original_path = page['path'].dup  # "_posts/path/to/post.md"
       tex_path = @here ? "#{original_path.sub(/\..*$/, '')}.tex" : transform_path_to_tex(original_path)
       content = File.read(tex_path, encoding: 'utf-8')
 
@@ -834,7 +834,7 @@ def generateEnvironmentContent(context,envname,content=nil,label=nil,display_mod
 end
 
 module Jekyll
-  class IncludeBson < Liquid::Tag
+  class IncludeMsgpack < Liquid::Tag
     def initialize(tag_name, markup, tokens)
       super
       
@@ -853,10 +853,17 @@ module Jekyll
 
       page = context.registers[:page]
       content,anchor = generateEnvironmentContent(context,'plot',content=nil,label=@label)
-     
+      original_path = page['path'].dup
+      puts original_path
+      original_path.sub!('_posts','_posts.msgpack')
+      # puts original_path
+      parent = original_path.rpartition('/').first
+      filepath = "/#{parent}/#{@filename}"
+      puts filepath
+
       js = 
       <<~JS
-        renderCharts("/_posts.msgpack/#{@filename}","#{anchor}",#{@numberCols})
+        renderCharts("#{filepath}","#{anchor}",#{@numberCols})
       JS
 
       page['render-bson'] ||= ''
@@ -878,31 +885,7 @@ Liquid::Template.register_tag('gridequations', Jekyll::GridEquations)
 Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 Liquid::Template.register_tag('proofref', Jekyll::ProofRef)
 Liquid::Template.register_tag('includetex', Jekyll::IncludeTex)
-Liquid::Template.register_tag('includebson', Jekyll::IncludeBson)
-
-
-# Function to create JavaScript from collected notes
-def generate_javascript_notes(note)
-  return "" if(!note) 
-  
-  escaped_content = note['content'].gsub('`', '\\`')
-                                   .gsub('${', '\\${')
-                                   .gsub("\n", '<br>')
-  
-  id = note['id'].gsub('-','_').gsub('.','_')
-  <<~JS
-    // Note #{note['id']}
-    const noteElement#{id} = document.createElement('div');
-    noteElement#{id}.id = '#{note['id']}';
-    noteElement#{id}.className = 'side-note active';
-    noteElement#{id}.style.display = 'block';
-    noteElement#{id}.innerHTML = \`
-      <button class="close-btn" data-note="#{note['id']}" onclick="hideNote('#{note['id']}')">×</button>
-      <h3><a href="#{note['url']}">#{note['label']}</a> #{note['title']}</h3>
-      <p>#{escaped_content}</p>\`;
-    document.getElementById('side-notes-container').appendChild(noteElement#{id});
-  JS
-end
+Liquid::Template.register_tag('includemsgpack', Jekyll::IncludeMsgpack)
 
 
 def generate_sidenav(site)

@@ -93,7 +93,6 @@ And if I add <a href="www.fuck.com">this</a>
 {% ref sec:here %}
 
 
-[Link to a page]({% link _posts/2025-10-11-welcome-to-jekyll.markdown %})
 
 {% theorem theo:this:theorem:other true %}
 This is a theorem for einstein

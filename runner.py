@@ -2,6 +2,7 @@
 import sys
 import os
 import importlib.util
+from pathlib import Path
 
 def run_script_and_save(script_path, output_path):
     """
@@ -105,6 +106,10 @@ if __name__ == "__main__":
     script_path = os.path.abspath(script_name)
     filename = rewrite_path(script_path,filename)
     
+    # Create the directories if they do not exist
+    file_path = Path(filename)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
     print(script_path)
     print(filename)
 
