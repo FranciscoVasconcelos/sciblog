@@ -4,13 +4,13 @@ pretty-box {
 }
 
 pretty-box .box {
-  border: 1px solid #333;
-  border-radius: 8px;
+  /* border: 1px solid #333; */
+  /* border-radius: 8px; */
   padding: 12px;
-  background-color: #1e1e1e;
-  color: #ddd;
+  /* background-color: #1e1e1e; */
+  /* color: #ddd; */
   position: relative;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  /* box-shadow: 0 2px 10px rgba(0,0,0,0.5); */
 }
 pretty-box .header {
   font-size: 20px;
@@ -22,11 +22,20 @@ pretty-box .header {
 
 pretty-box .content {
   display: flex; 
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
   /* justify-content: space-around; /* or space-between, flex-start, etc.  */
   /* align-items: center; */
   /* flex-wrap: wrap; */
   /* gap: 10px; /* space between items */
 }
+
+
+pretty-box .content canvas {
+  max-width: 100%;
+  max-height: 100%;
+}   
 
 pretty-box .hide-button {
   position: absolute;

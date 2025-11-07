@@ -622,12 +622,11 @@ async function renderCharts(filename, parentId, numberCols) {
         decodedData.forEach((chartConfig, index) => {
             // Create a container for the chart
             const container = document.createElement('div');
-            // container.style.width = '45%';
-            container.style.flex = `1 1 calc(50% - 10px)`;
+            container.style.flex = `1 1 ${100/numberCols-2}%`;
             container.style.display = 'flex';
-            // container.style.justifyContent = 'center';
-            // container.style.alignItems = 'center';
-            // container.style.padding = '5px';
+            container.style.maxWidth = '100%';
+            container.style.height = '300px';
+            container.style.position = 'relative';
 
             const content = parent.querySelector('.box').querySelector('.content');
 
@@ -635,12 +634,13 @@ async function renderCharts(filename, parentId, numberCols) {
             canvas.id = `msgpack-chart-${index}`;
             container.appendChild(canvas);
             content.appendChild(container);
-
+            
             // Create chart instance
             new Chart(canvas, {
                 type: chartConfig.type || 'line',
                 data: chartConfig.data,
-                options: chartConfig.options || {}
+                options: {...(chartConfig.options || {}),
+                            maintainAspectRatio: false}
             });
         });
     } catch (err) {
