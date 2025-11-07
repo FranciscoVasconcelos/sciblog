@@ -856,7 +856,7 @@ module Jekyll
      
       js = 
       <<~JS
-        renderCharts("/_posts.bson/#{@filename}","#{anchor}",#{@numberCols})
+        renderCharts("/_posts.msgpack/#{@filename}","#{anchor}",#{@numberCols})
       JS
 
       page['render-bson'] ||= ''
