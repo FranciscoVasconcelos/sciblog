@@ -866,13 +866,66 @@ module Jekyll
         renderCharts("#{filepath}","#{anchor}",#{@numberCols})
       JS
 
-      page['render-bson'] ||= ''
-      page['render-bson'] << js
+      page['render-scripts'] ||= ''
+      page['render-scripts'] << js
 
       return content
 
     end
   end
+  class IncludeTable < Liquid::Tag
+    def initialize(tag_name, markup, tokens)
+      super
+      
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+      @filename = positional[0] || named['filename']
+      # @numberCols = positional[1] || named['cols']
+      @label = positional[1] || named['label']
+      
+    end
+    def render(context)
+
+
+      # generateVisualELement(context,'table',@filename,@label,%(loadAndRenderTable("#{filepath}","#{anchor}")))
+      page = context.registers[:page]
+      content,anchor = generateEnvironmentContent(context,'table',content=nil,label=@label)
+      original_path = page['path'].dup
+      original_path.sub!('_posts','_posts.msgpack')
+      parent = original_path.rpartition('/').first
+      filepath = "/#{parent}/#{@filename}"
+
+      js = 
+      <<~JS
+        loadAndRenderTable("#{filepath}","#{anchor}")
+      JS
+
+      page['render-scripts'] ||= ''
+      page['render-scripts'] << js
+
+      return content
+
+    end
+  end
+end
+
+# The aim of this function is to create an env and to add a
+def generateVisualELement(context,type,filename,label,js)
+    page = context.registers[:page]
+    content,anchor = generateEnvironmentContent(context,type,content=nil,label=label)
+    original_path = page['path'].dup
+    original_path.sub!('_posts','_posts.msgpack')
+    parent = original_path.rpartition('/').first
+    filepath = "/#{parent}/#{filename}"
+
+    page['render-scripts'] ||= ''
+    page['render-scripts'] << js
+
+    return content
 end
 
 Liquid::Template.register_tag('align',Jekyll::AlignLabel)
@@ -886,6 +939,7 @@ Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 Liquid::Template.register_tag('proofref', Jekyll::ProofRef)
 Liquid::Template.register_tag('includetex', Jekyll::IncludeTex)
 Liquid::Template.register_tag('includemsgpack', Jekyll::IncludeMsgpack)
+Liquid::Template.register_tag('includetable', Jekyll::IncludeTable)
 
 
 def generate_sidenav(site)
@@ -1281,7 +1335,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       setProof(post,site)
       generateProof(post,site)
       injectAtEndBody(post,js_content)
-      injectAtEndBody(post,"<script>#{post['render-bson']}</script>") # inject the render bson scripts
+      injectAtEndBody(post,"<script>#{post['render-scripts']}</script>") # inject the render scripts
       injectAtBeginBody(post,extra_content)
       injectAtBeginBody(post,commands)
       AppendAllEnvStyles(site,post)

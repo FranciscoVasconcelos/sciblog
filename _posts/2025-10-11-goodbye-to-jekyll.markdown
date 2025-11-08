@@ -141,4 +141,6 @@ This is a repeated equation:
 
 {% ref eq:wtf:2 %}
 
+{% includetable table.msgpack %}
+
 <!-- <prooflabel> math-ref-theo:this:theorem:proof</prooflabel> -->

@@ -648,6 +648,89 @@ async function renderCharts(filename, parentId, numberCols) {
     }
 }
 
+/**
+ * Renders MessagePack data as an HTML table
+ * @param {Uint8Array} uint8Array - The MessagePack data as a Uint8Array
+ * @param {HTMLElement} container - The container element to render the table into
+ * @returns {void}
+ */
+function renderMessagePackTable(uint8Array, container) {
+  // Decode the MessagePack data
+  const data = MessagePack.decode(uint8Array);
+  
+  // Validate that data is an array
+  if (!Array.isArray(data)) {
+    container.textContent = 'Expected an array of objects in the MessagePack data.';
+    return;
+  }
+  
+  // Validate that array is not empty
+  if (data.length === 0) {
+    container.textContent = 'No data to display.';
+    return;
+  }
+  
+  // Create table element
+  const table = document.createElement('table');
+  table.border = '1';
+  table.cellPadding = '5';
+  
+  // Extract headers from first object
+  const headers = Object.keys(data[0]);
+  
+  // Create header row
+  const headerRow = document.createElement('tr');
+  headers.forEach(key => {
+    const th = document.createElement('th');
+    th.textContent = key[0].toUpperCase() + key.slice(1);;
+    headerRow.appendChild(th);
+  });
+  table.appendChild(headerRow);
+  
+  // Create data rows
+  data.forEach(row => {
+    const tr = document.createElement('tr');
+    headers.forEach(key => {
+      const td = document.createElement('td');
+      td.textContent = row[key];
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
+  
+  // Clear container and append table
+  container.innerHTML = '';
+  container.appendChild(table);
+}
+
+
+/**
+ * Loads a MessagePack file from a file path (via fetch) and renders it as an HTML table
+ * @param {string} filePath - The path or URL to the MessagePack file
+ * @param {string} containerId - The ID of the container element to render the table into
+ * @returns {Promise<void>}
+ */
+async function loadAndRenderTable(filePath, containerId) {
+  const container = document.getElementById(containerId);
+
+  try {
+    // Fetch the MessagePack file as an ArrayBuffer
+    const response = await fetch(filePath);
+    if (!response.ok) {
+      container.textContent = `Failed to load file: ${response.statusText}`;
+      return;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    // Render the decoded data as a table
+    renderMessagePackTable(uint8Array, container);
+  } catch (error) {
+    container.textContent = `Error loading file: ${error.message}`;
+  }
+}
+
 const iframesHandler = new IframesHandler(postsLinks);
 const elements = document.getElementsByTagName('repeat-element');
 
