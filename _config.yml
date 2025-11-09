@@ -94,6 +94,7 @@ include:
 #
 exclude:
   - "*.tex"
+  - bin/
 #   - .sass-cache/
 #   - .jekyll-cache/
 #   - gemfiles/
