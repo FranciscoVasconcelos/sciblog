@@ -64,6 +64,11 @@ or
 
 - [ ] Using `Chart.js` and flex boxes the content gets all fucked up. It does not adjust automatically.
 - [ ] Include msgpack tag is being called with path=> `_posts/research/2025-11-07-my-research-note.md/#excerpt` and filename=> `test.msgpack`
+**Cloudflare**
+- [ ] Side content is not being rendered in the right place.
+- [ ] The table is also not being rendered. 
+- [ ] Clicking a link to the own page refreshes it. And the ram gets more used by the webpage!
+- [ ] The website is eating much more ram making the computer slow. 
 
 ### IMPORTANT 
 
