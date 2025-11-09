@@ -5,6 +5,7 @@ date:   2025-10-11 11:16:18 +0100
 categories: jekyll update
 acronym: P
 section_with_acronym: true
+layout: side-notes
 ---
 
 
@@ -141,6 +142,7 @@ This is a repeated equation:
 
 {% ref eq:wtf:2 %}
 
+{% note some:note:label %}
 {% includetable table.msgpack %}
-
+{% endnote %}
 <!-- <prooflabel> math-ref-theo:this:theorem:proof</prooflabel> -->

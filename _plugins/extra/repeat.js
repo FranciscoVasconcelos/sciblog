@@ -587,7 +587,7 @@ function handleSideNotes(target){
 }
 
 // Render charts inside of the parent container
-async function renderCharts(filename, parentId, numberCols) {
+async function RenderChart(filename, parentId, numberCols) {
     // Ensure Chart.js and MessagePack are available
     if (typeof Chart === 'undefined') {
         throw new Error("Chart.js is required but not found.");
@@ -648,12 +648,7 @@ async function renderCharts(filename, parentId, numberCols) {
     }
 }
 
-/**
- * Renders MessagePack data as an HTML table
- * @param {Uint8Array} uint8Array - The MessagePack data as a Uint8Array
- * @param {HTMLElement} container - The container element to render the table into
- * @returns {void}
- */
+/* Renders MessagePack data as an HTML table */
 function renderMessagePackTable(uint8Array, container) {
   // Decode the MessagePack data
   const data = MessagePack.decode(uint8Array);
@@ -697,20 +692,14 @@ function renderMessagePackTable(uint8Array, container) {
     });
     table.appendChild(tr);
   });
-  
-  // Clear container and append table
-  container.innerHTML = '';
-  container.appendChild(table);
+
+  const content = container.querySelector('.box').querySelector('.content');
+  content.appendChild(table);
 }
 
 
-/**
- * Loads a MessagePack file from a file path (via fetch) and renders it as an HTML table
- * @param {string} filePath - The path or URL to the MessagePack file
- * @param {string} containerId - The ID of the container element to render the table into
- * @returns {Promise<void>}
- */
-async function loadAndRenderTable(filePath, containerId) {
+/* Loads a MessagePack file from a file path (via fetch) and renders it as an HTML table */
+async function RenderTable(filePath, containerId) {
   const container = document.getElementById(containerId);
 
   try {

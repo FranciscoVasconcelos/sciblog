@@ -65,16 +65,20 @@ sciblog:
     note:
       countby: document
       label-without-acronym: true
-      # side-content: true
       display-mode: side
       start-hidden: true
       style: cyberpunk
-    plot:
+    chart:
       countby: document
       label-without-acronym: true
-      # side-content: true
       display-mode: inline
       start-hidden: false
+      style: blank
+    table:
+      countby: document
+      label-without-acronym: true
+      display-mode: inline
+      start-hidden: true
       style: blank
 
 include:

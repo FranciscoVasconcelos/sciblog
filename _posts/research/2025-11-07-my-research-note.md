@@ -4,4 +4,4 @@ title: "My Research Note"
 categories: research
 ---
 
-{% includemsgpack test.msgpack %}
+{% includechart test.msgpack 2 %}

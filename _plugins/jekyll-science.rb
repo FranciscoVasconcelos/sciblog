@@ -834,7 +834,7 @@ def generateEnvironmentContent(context,envname,content=nil,label=nil,display_mod
 end
 
 module Jekyll
-  class IncludeMsgpack < Liquid::Tag
+  class IncludeChart < Liquid::Tag
     def initialize(tag_name, markup, tokens)
       super
       
@@ -850,26 +850,8 @@ module Jekyll
       
     end
     def render(context)
-
-      page = context.registers[:page]
-      content,anchor = generateEnvironmentContent(context,'plot',content=nil,label=@label)
-      original_path = page['path'].dup
-      puts original_path
-      original_path.sub!('_posts','_posts.msgpack')
-      # puts original_path
-      parent = original_path.rpartition('/').first
-      filepath = "/#{parent}/#{@filename}"
-      puts filepath
-
-      js = 
-      <<~JS
-        renderCharts("#{filepath}","#{anchor}",#{@numberCols})
-      JS
-
-      page['render-scripts'] ||= ''
-      page['render-scripts'] << js
-
-      return content
+    
+      generateVisualELement(context,'chart',@filename,@label,@numberCols)
 
     end
   end
@@ -890,37 +872,31 @@ module Jekyll
     end
     def render(context)
 
-
-      # generateVisualELement(context,'table',@filename,@label,%(loadAndRenderTable("#{filepath}","#{anchor}")))
-      page = context.registers[:page]
-      content,anchor = generateEnvironmentContent(context,'table',content=nil,label=@label)
-      original_path = page['path'].dup
-      original_path.sub!('_posts','_posts.msgpack')
-      parent = original_path.rpartition('/').first
-      filepath = "/#{parent}/#{@filename}"
-
-      js = 
-      <<~JS
-        loadAndRenderTable("#{filepath}","#{anchor}")
-      JS
-
-      page['render-scripts'] ||= ''
-      page['render-scripts'] << js
-
-      return content
-
+      generateVisualELement(context,'table',@filename,@label)
+    
     end
   end
 end
 
 # The aim of this function is to create an env and to add a
-def generateVisualELement(context,type,filename,label,js)
+def generateVisualELement(context,type,filename,label,*args)
     page = context.registers[:page]
     content,anchor = generateEnvironmentContent(context,type,content=nil,label=label)
     original_path = page['path'].dup
     original_path.sub!('_posts','_posts.msgpack')
     parent = original_path.rpartition('/').first
     filepath = "/#{parent}/#{filename}"
+
+    # Convert Ruby arguments to JS argument strings
+    js_args = args.map { |a| a.is_a?(String) ? "\"#{a}\"" : a }.join(", ")
+
+    # Build the full JS argument list
+    full_args = ["\"#{filepath}\"", "\"#{anchor}\"", js_args].reject(&:empty?).join(", ")
+
+    js = 
+    <<~JS
+      Render#{type.capitalize}(#{full_args})
+    JS
 
     page['render-scripts'] ||= ''
     page['render-scripts'] << js
@@ -938,7 +914,7 @@ Liquid::Template.register_tag('gridequations', Jekyll::GridEquations)
 Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 Liquid::Template.register_tag('proofref', Jekyll::ProofRef)
 Liquid::Template.register_tag('includetex', Jekyll::IncludeTex)
-Liquid::Template.register_tag('includemsgpack', Jekyll::IncludeMsgpack)
+Liquid::Template.register_tag('includechart', Jekyll::IncludeChart)
 Liquid::Template.register_tag('includetable', Jekyll::IncludeTable)
 
 
