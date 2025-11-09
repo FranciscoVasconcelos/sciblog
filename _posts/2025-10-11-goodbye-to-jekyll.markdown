@@ -38,6 +38,8 @@ some other equation with a new tag
 
 {% section "A section with spaces" level=0 %}
 {% section "Anoter section with spaces" level=0 %}
+{% section "Anoter section with spaces" level=5 %}
+<!-- {% section "Anoter section with spaces" level=5 %} -->
 
 {% section firstsubsection level=1 label=first-label %}
 

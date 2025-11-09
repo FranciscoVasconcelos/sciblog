@@ -145,7 +145,7 @@ def setupSectionEnv(context,level,envname)
   context[envname]["withacronym"] ||= page["#{envname}_with_acronym"] || false
   # Create counter for each section level
   context[envname]["counter"] ||= Array.new
-  # Initialize counter if empty
+  # Initialize counter if empt;y
   context[envname]["counter"][level] ||= 0
   # increment counter
   context[envname]["counter"][level] += 1
@@ -1123,7 +1123,7 @@ end
 
 def refProof(proofurl,envurl,label,proofname,envname)
   <<~HTML
-  <a style="color:red" href=#{proofurl}>#{proofname.capitalize}</a> of #{envname} <a href=#{envurl}>#{label}</a>
+  <a style="color:red" href=#{proofurl}>#{proofname.capitalize}</a> <span> of #{envname} </span> <a href=#{envurl}>#{label}</a>
   HTML
 end
 

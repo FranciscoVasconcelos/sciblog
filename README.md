@@ -70,6 +70,9 @@ or
 - [ ] Clicking a link to the own page refreshes it. And the ram gets more used by the webpage!
 - [ ] The website is eating much more ram making the computer slow. 
 
+- [x] Rendering sections from iframes is ommiting text specifically `{% ref some-label popup=true %}` does not show 'of theorem'
+
+
 ### IMPORTANT 
 
 As of 11/10/2025 the Brave browser cannot render mathjax...

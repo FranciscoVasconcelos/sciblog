@@ -766,9 +766,17 @@ document.querySelectorAll('a.popup').forEach(element => {
     leave = false;
     iframesHandler.setOnIframeLoad(relativePath,(iframeDoc) => {
       let elem = iframeDoc.getElementById(anchor); 
+      let clone = null;
+      if(/^H[1-6]$/.test(elem.tagName)) {
+        clone = getSectionFragment(elem);
+        const bgColor = window.getComputedStyle(iframeDoc.body).backgroundColor;
+        clone.style.backgroundColor = bgColor;
+        clone.style.padding = '10px';
+      }
+      else clone = renameIdsRecursively(elem.cloneNode(true));
       // copyAllMatchingStylesToPage(elem);
       // Create a clone and rename the ids
-      let clone = renameIdsRecursively(elem.cloneNode(true));
+      
       
       const ref = link.getBoundingClientRect();
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -794,4 +802,31 @@ document.querySelectorAll('a.popup').forEach(element => {
   });
 
 });
+
+/* It takes a reference to a heading element (like an h2) and collects
+ * everything from after that element up to (but not including) the next 
+ * heading of equal or higher level. 
+ * */
+function getSectionFragment(headingEl) {
+  const baseLevel = parseInt(headingEl.tagName.slice(1), 10);
+  const frag = document.createDocumentFragment();
+  let node = headingEl.nextElementSibling;
+  let div = document.createElement('div');
+  let headingClone = headingEl.cloneNode(true);
+  headingClone.id = `${headingClone.id}-head-clone`;
+  frag.appendChild(headingClone);
+
+  while (node) {
+    if(/^H[1-6]$/.test(node.tagName)) {
+      const level = parseInt(node.tagName.slice(1), 10);
+      if (level <= baseLevel) break;
+    }
+    console.log(node);
+    frag.appendChild(renameIdsRecursively(node.cloneNode(true)));
+    node = node.nextElementSibling;
+  }
+  div.appendChild(frag);
+  div.id = `${headingEl.id}-repeat`
+  return div;
+}
 
