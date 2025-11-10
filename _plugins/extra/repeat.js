@@ -1,4 +1,6 @@
 
+
+
 /*********************Handle styling of cloned content functions**************************************/
 function extractAndInjectCSS(iframe) {
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
@@ -829,4 +831,76 @@ function getSectionFragment(headingEl) {
   div.id = `${headingEl.id}-repeat`
   return div;
 }
+
+
+function RenderGraphic(plyPath,containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error(`Container '${containerId}' not found.`);
+    return;
+  }
+
+  // Renderer
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  container.appendChild(renderer.domElement);
+
+  // Scene and camera
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x111111);
+
+  const camera = new THREE.PerspectiveCamera(
+    60,
+    container.clientWidth / container.clientHeight,
+    0.01,
+    1000
+  );
+  camera.position.set(0, 0, 2);
+
+  // Light
+  const light = new THREE.DirectionalLight(0xffffff, 0.8);
+  light.position.set(1, 1, 1);
+  scene.add(light);
+
+  // Loader
+  const loader = new THREE.PLYLoader();
+  loader.load(
+    plyPath,
+    geometry => {
+      geometry.computeBoundingBox?.();
+
+      const material = new THREE.PointsMaterial({
+        size: 0.01,
+        vertexColors: !!geometry.getAttribute('color'),
+      });
+
+      const points = new THREE.Points(geometry, material);
+      scene.add(points);
+
+      // Fit camera to object
+      const box = new THREE.Box3().setFromObject(points);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fov = camera.fov * (Math.PI / 180);
+      const cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
+      camera.position.set(center.x, center.y, center.z + cameraZ);
+      camera.lookAt(center);
+
+      renderer.render(scene, camera);
+    },
+    undefined,
+    error => console.error('Error loading PLY:', error)
+  );
+
+  // Handle resize
+  window.addEventListener('resize', () => {
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.render(scene, camera);
+  });
+}
+
 

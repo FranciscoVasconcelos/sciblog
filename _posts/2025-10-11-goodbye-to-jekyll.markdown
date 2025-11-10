@@ -147,4 +147,6 @@ This is a repeated equation:
 {% note some:note:label %}
 {% includetable table.msgpack %}
 {% endnote %}
+
+{% includegraphic Axleshaft.ply %}
 <!-- <prooflabel> math-ref-theo:this:theorem:proof</prooflabel> -->

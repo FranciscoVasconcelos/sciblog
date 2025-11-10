@@ -876,7 +876,30 @@ module Jekyll
     
     end
   end
+  class IncludeGraphic < Liquid::Tag
+    def initialize(tag_name, markup, tokens)
+      super
+      
+      unless valid_param_order?(markup)
+        raise SyntaxError, 
+          "Positional arguments must come before named arguments"
+      end
+      
+      positional, named = parse_params(markup)
+      @filename = positional[0] || named['filename']
+      # @numberCols = positional[1] || named['cols']
+      @label = positional[1] || named['label']
+      
+    end
+    def render(context)
+
+      generateVisualELement(context,'graphic',@filename,@label)
+    
+    end
+  end
 end
+
+
 
 # The aim of this function is to create an env and to add a
 def generateVisualELement(context,type,filename,label,*args)
@@ -914,8 +937,10 @@ Liquid::Template.register_tag('gridequations', Jekyll::GridEquations)
 Liquid::Template.register_tag('repeat', Jekyll::Repeat)
 Liquid::Template.register_tag('proofref', Jekyll::ProofRef)
 Liquid::Template.register_tag('includetex', Jekyll::IncludeTex)
+# Visual elements
 Liquid::Template.register_tag('includechart', Jekyll::IncludeChart)
 Liquid::Template.register_tag('includetable', Jekyll::IncludeTable)
+Liquid::Template.register_tag('includegraphic', Jekyll::IncludeGraphic)
 
 
 def generate_sidenav(site)

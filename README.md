@@ -19,6 +19,10 @@ The ability to write cross-referencing posts permits me to organise my notes eas
     + *Inplace* (Appears at the location of the liquid tag)
     + *Side* (Content can be put on the side)
     + *Pop-up* (Links can be made to show pop-up on hover) set `popup=true` 
+- Adding tables and plots/charts from external files
+    + **Table** `{% includetable some-table.msgpack %}`
+    + **Chart** `{% includechart some-chart.msgpack %}`
+
 
 **`Fetch.html`** 
 Has a sidebar with buttons to fetch certain elements by the names defined in the config file.
@@ -64,13 +68,25 @@ or
 
 - [ ] Using `Chart.js` and flex boxes the content gets all fucked up. It does not adjust automatically.
 - [ ] Include msgpack tag is being called with path=> `_posts/research/2025-11-07-my-research-note.md/#excerpt` and filename=> `test.msgpack`
-**Cloudflare**
-- [ ] Side content is not being rendered in the right place.
-- [ ] The table is also not being rendered. 
-- [ ] Clicking a link to the own page refreshes it. And the ram gets more used by the webpage!
-- [ ] The website is eating much more ram making the computer slow. 
+
+- **Cloudflare**
+    + [ ] Side content is not being rendered in the right place.
+    + [ ] The table is also not being rendered. 
+    + [ ] Clicking a link to the own page refreshes it. And the ram gets more used by the webpage!
+    + [ ] The website is eating much more ram making the computer slow. 
 
 - [x] Rendering sections from iframes is ommiting text specifically `{% ref some-label popup=true %}` does not show 'of theorem'
+
+- [ ] Change `_posts.msgpack` to `_posts.data`
+- [ ] Add simple controls to the 3D renderer
+- [ ] Enable rendering of any type of file 
+
+## 3D rendering and GUI
+
+- [`three.js`](https://threejs.org/) or `webgl` for rendering
+- [`tweakpane`](https://tweakpane.github.io/docs/)
+
+
 
 
 ### IMPORTANT 
