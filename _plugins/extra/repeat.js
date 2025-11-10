@@ -1,4 +1,6 @@
-
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 
 
 /*********************Handle styling of cloned content functions**************************************/
@@ -840,67 +842,89 @@ function RenderGraphic(plyPath,containerId) {
     return;
   }
 
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
+
+  // Camera
+  const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+  );
+  camera.position.set(5, 5, 5);
+
   // Renderer
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
 
-  // Scene and camera
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x111111);
+  // Add OrbitControls (imported from Three.js addons)
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
 
-  const camera = new THREE.PerspectiveCamera(
-    60,
-    container.clientWidth / container.clientHeight,
-    0.01,
-    1000
-  );
-  camera.position.set(0, 0, 2);
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambientLight);
 
-  // Light
-  const light = new THREE.DirectionalLight(0xffffff, 0.8);
-  light.position.set(1, 1, 1);
-  scene.add(light);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(10, 10, 10);
+  scene.add(directionalLight);
 
-  // Loader
-  const loader = new THREE.PLYLoader();
-  loader.load(
-    plyPath,
-    geometry => {
-      geometry.computeBoundingBox?.();
+  // PLYLoader is now imported from Three.js addons
+  // You can use it like: 
+  const loader = new PLYLoader();
+  loader.load(plyPath, (geometry) => { 
+       const material = new THREE.MeshPhongMaterial({ color: 0x00ff88 });
+       const mesh = new THREE.Mesh(geometry, material);
+       scene.add(mesh);
+   });
 
-      const material = new THREE.PointsMaterial({
-        size: 0.01,
-        vertexColors: !!geometry.getAttribute('color'),
-      });
-
-      const points = new THREE.Points(geometry, material);
-      scene.add(points);
-
-      // Fit camera to object
-      const box = new THREE.Box3().setFromObject(points);
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3());
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const fov = camera.fov * (Math.PI / 180);
-      const cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
-      camera.position.set(center.x, center.y, center.z + cameraZ);
-      camera.lookAt(center);
-
-      renderer.render(scene, camera);
-    },
-    undefined,
-    error => console.error('Error loading PLY:', error)
-  );
-
-  // Handle resize
-  window.addEventListener('resize', () => {
-    camera.aspect = container.clientWidth / container.clientHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.render(scene, camera);
+  // Create a simple cube as demo geometry (since we can't load external PLY files)
+  const geometry = new THREE.BoxGeometry(2, 2, 2);
+  const material = new THREE.MeshPhongMaterial({ 
+      color: 0x00ff88,
+      flatShading: true
   });
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+
+  // Add wireframe
+  const wireframe = new THREE.WireframeGeometry(geometry);
+  const line = new THREE.LineSegments(wireframe);
+  line.material.color.setHex(0xffffff);
+  line.material.opacity = 0.3;
+  line.material.transparent = true;
+  mesh.add(line);
+
+  // Add grid helper
+  const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
+  scene.add(gridHelper);
+
+  // Animation loop
+  function animate() {
+      requestAnimationFrame(animate);
+      
+      // Update controls
+      controls.update();
+      
+      // Rotate the mesh slowly
+      mesh.rotation.x += 0.005;
+      mesh.rotation.y += 0.005;
+      
+      renderer.render(scene, camera);
+  }
+
+  // Handle window resize
+  window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // Start animation
+  animate();
 }
 
 

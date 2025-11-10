@@ -1102,7 +1102,7 @@ def appendPostsUrlVar(site,filename)
   
   # Create the complete script with posts data
   <<~HTML
-  <script>
+  <script type='module'>
     const postsLinks = #{posts_links};
     
     #{js_content}
