@@ -1336,7 +1336,7 @@ Jekyll::Hooks.register :site, :post_render do |site|
       setProof(post,site)
       generateProof(post,site)
       injectAtEndBody(post,js_content)
-      injectAtEndBody(post,"<script>#{post['render-scripts']}</script>") # inject the render scripts
+      injectAtEndBody(post,"<script type='module'>#{post['render-scripts']}</script>") # inject the render scripts
       injectAtBeginBody(post,extra_content)
       injectAtBeginBody(post,commands)
       AppendAllEnvStyles(site,post)

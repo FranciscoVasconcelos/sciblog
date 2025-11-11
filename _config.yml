@@ -78,9 +78,14 @@ sciblog:
       countby: document
       label-without-acronym: true
       display-mode: inline
-      start-hidden: true
+      start-hidden: false
       style: blank
-
+    graphic:
+      countby: document
+      label-without-acronym: true
+      display-mode: inline
+      start-hidden: false
+      style: blank
 include:
   - "_posts.msgpack"
 

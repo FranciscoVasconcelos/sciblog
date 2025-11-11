@@ -90,10 +90,10 @@ And if I add <a href="www.fuck.com">this</a>
 {% section other-other-subsection level=2 label=some-other-label %}
 {% section other-other-subsubsection level=3 %}
 
-{% ref eq:pi:3 %}
+<!-- {% ref eq:pi:3 %} -->
 
 
-{% ref sec:here %}
+<!-- {% ref sec:here %} -->
 
 
 
@@ -135,7 +135,7 @@ This is a repeated theorem:
 {% repeat theo:this:theorem %}
 
 This is a repeated equation:
-{% repeat eq:pi:3 %}
+<!-- {% repeat eq:pi:3 %} -->
 
 
 {% proofref theo:this:theorem %}
@@ -144,9 +144,7 @@ This is a repeated equation:
 
 {% ref eq:wtf:2 %}
 
-{% note some:note:label %}
+
 {% includetable table.msgpack %}
-{% endnote %}
 
 {% includegraphic Axleshaft.ply %}
-<!-- <prooflabel> math-ref-theo:this:theorem:proof</prooflabel> -->

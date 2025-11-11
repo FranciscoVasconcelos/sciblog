@@ -81,6 +81,8 @@ or
 - [ ] Add simple controls to the 3D renderer
 - [ ] Enable rendering of any type of file 
 
+- [ ] Error on **iframe** cannot find functions `RenderChart`, `RenderTable` and `RenderGraphic`
+
 ## 3D rendering and GUI
 
 - [`three.js`](https://threejs.org/) or `webgl` for rendering

@@ -671,6 +671,8 @@ function renderMessagePackTable(uint8Array, container) {
   
   // Create table element
   const table = document.createElement('table');
+  const head = document.createElement('thead');
+  const body = document.createElement('tbody');
   table.border = '1';
   table.cellPadding = '5';
   
@@ -684,7 +686,8 @@ function renderMessagePackTable(uint8Array, container) {
     th.textContent = key[0].toUpperCase() + key.slice(1);;
     headerRow.appendChild(th);
   });
-  table.appendChild(headerRow);
+  head.appendChild(headerRow);
+  table.appendChild(head);
   
   // Create data rows
   data.forEach(row => {
@@ -694,10 +697,14 @@ function renderMessagePackTable(uint8Array, container) {
       td.textContent = row[key];
       tr.appendChild(td);
     });
-    table.appendChild(tr);
+    // Append to the body
+    body.appendChild(tr);
   });
+  // Append body to table
+  table.appendChild(body);
 
   const content = container.querySelector('.box').querySelector('.content');
+  content.style.justifyContent = 'center';
   content.appendChild(table);
 }
 
@@ -750,8 +757,8 @@ document.addEventListener('DOMContentLoaded', () => {
 for(const refElem of elements){
   const { domain, relativePath, anchor } = parseURL(refElem.getAttribute("url"));
   iframesHandler.setOnIframeLoad(relativePath,(iframeDoc) => {
-    elem = iframeDoc.getElementById(anchor);
-    clone = renameIdsRecursively(elem.cloneNode(true));
+    let elem = iframeDoc.getElementById(anchor);
+    let clone = renameIdsRecursively(elem.cloneNode(true));
     clone.style.display = 'block'; 
     // Display the clone
     refElem.insertAdjacentElement('afterend', clone);
@@ -842,8 +849,12 @@ function RenderGraphic(plyPath,containerId) {
     return;
   }
 
+  const content = container.querySelector('.box').querySelector('.content');
+  const mainContent = document.body.querySelector('.main-content');
+  var bgColor = window.getComputedStyle(mainContent, null).getPropertyValue('background-color');
+
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000);
+  scene.background = new THREE.Color(bgColor);
 
   // Camera
   const camera = new THREE.PerspectiveCamera(
@@ -856,8 +867,10 @@ function RenderGraphic(plyPath,containerId) {
 
   // Renderer
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  container.appendChild(renderer.domElement);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(content.clientWidth, content.clientHeight || 200);
+  content.appendChild(renderer.domElement);
+  camera.aspect = content.clientWidth/(content.clientHeight || 200);
 
   // Add OrbitControls (imported from Three.js addons)
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -876,55 +889,49 @@ function RenderGraphic(plyPath,containerId) {
   // You can use it like: 
   const loader = new PLYLoader();
   loader.load(plyPath, (geometry) => { 
-       const material = new THREE.MeshPhongMaterial({ color: 0x00ff88 });
-       const mesh = new THREE.Mesh(geometry, material);
-       scene.add(mesh);
+      
+      geometry.computeBoundingBox?.();
+      const material = new THREE.PointsMaterial({
+        size: 0.01,
+        vertexColors: !!geometry.getAttribute('color'),
+      });
+
+      const points = new THREE.Points(geometry, material);
+      scene.add(points);
+
+      // Fit camera to object
+      const box = new THREE.Box3().setFromObject(points);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fov = camera.fov * (Math.PI / 180);
+      const cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.5;
+      camera.position.set(center.x, center.y, center.z + cameraZ);
+      camera.lookAt(center);
+
    });
-
-  // Create a simple cube as demo geometry (since we can't load external PLY files)
-  const geometry = new THREE.BoxGeometry(2, 2, 2);
-  const material = new THREE.MeshPhongMaterial({ 
-      color: 0x00ff88,
-      flatShading: true
-  });
-  const mesh = new THREE.Mesh(geometry, material);
-  scene.add(mesh);
-
-  // Add wireframe
-  const wireframe = new THREE.WireframeGeometry(geometry);
-  const line = new THREE.LineSegments(wireframe);
-  line.material.color.setHex(0xffffff);
-  line.material.opacity = 0.3;
-  line.material.transparent = true;
-  mesh.add(line);
-
-  // Add grid helper
-  const gridHelper = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
-  scene.add(gridHelper);
 
   // Animation loop
   function animate() {
       requestAnimationFrame(animate);
       
       // Update controls
-      controls.update();
-      
-      // Rotate the mesh slowly
-      mesh.rotation.x += 0.005;
-      mesh.rotation.y += 0.005;
-      
+      controls.update();    
       renderer.render(scene, camera);
   }
 
   // Handle window resize
   window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = content.clientWidth / content.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(content.clientWidth, content.clientHeight);
   });
 
   // Start animation
   animate();
 }
 
-
+// Make the functions available everywhere
+window.RenderTable = RenderTable;
+window.RenderChart = RenderChart;
+window.RenderGraphic = RenderGraphic;
