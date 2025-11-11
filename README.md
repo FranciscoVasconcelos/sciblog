@@ -59,8 +59,8 @@ or
         - Intercept mouse button middle click 
 
 - [ ] Nicer pop-up?
-- [ ] Default configuration file.
-- [ ] Repeatable sections and subsections? 
+- [x] Default configuration file (`_default.yml`).
+- [x] Repeatable sections and subsections? 
 - [x] Hide envs on deselect envs in `fetch.html`
 
 - [x] Prevent the new tab to open when I press a link with middle mouse button
@@ -77,18 +77,21 @@ or
 
 - [x] Rendering sections from iframes is ommiting text specifically `{% ref some-label popup=true %}` does not show 'of theorem'
 
-- [ ] Change `_posts.msgpack` to `_posts.data`
-- [ ] Add simple controls to the 3D renderer
+- [x] Change `_posts.msgpack` to `_posts.data`
+- [x] Add simple controls to the 3D renderer
 - [ ] Enable rendering of any type of file 
 
-- [ ] Error on **iframe** cannot find functions `RenderChart`, `RenderTable` and `RenderGraphic`
+- [x] Error on **iframe** cannot find functions `RenderChart`, `RenderTable` and `RenderGraphic`
+- [ ] `_default.yml` cannot use `include` the overwrite does not adds the includes 
+
+- [ ] Fix or hide `Deprecation Warning [color-functions]: darken() is deprecated. Suggestions:`
+
+- [ ] Three.js does not render on popup (while tables do)
 
 ## 3D rendering and GUI
 
 - [`three.js`](https://threejs.org/) or `webgl` for rendering
 - [`tweakpane`](https://tweakpane.github.io/docs/)
-
-
 
 
 ### IMPORTANT 

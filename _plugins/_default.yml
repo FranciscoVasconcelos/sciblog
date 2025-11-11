@@ -1,0 +1,50 @@
+# The configuration for the sciblog plugin
+sciblog:
+  envs:
+    theorem:
+      countby: section
+      proofname: proof
+      style: overtitle
+    lemma:
+      countby: subsection
+      proofname: proof
+      side-content: false
+      display-mode: overlay
+      start-hidden: true
+      style: dark
+    exercise:
+      countby: section
+      proofname: solution
+    definition:
+      countby: section
+      proofname: prooof
+    equation:
+      countby: section
+    note:
+      countby: document
+      label-without-acronym: true
+      display-mode: side
+      start-hidden: true
+      style: cyberpunk
+    chart:
+      countby: document
+      label-without-acronym: true
+      display-mode: inline
+      start-hidden: false
+      style: blank
+    table:
+      countby: document
+      label-without-acronym: true
+      display-mode: inline
+      start-hidden: false
+      style: blank
+    graphic:
+      countby: document
+      label-without-acronym: true
+      display-mode: inline
+      start-hidden: false
+      style: blank
+
+include:
+  - "_posts.data"
+

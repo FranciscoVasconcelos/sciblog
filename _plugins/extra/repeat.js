@@ -807,7 +807,7 @@ document.querySelectorAll('a.popup').forEach(element => {
   element.addEventListener('mouseleave', (e) => {
     const link = event.target.closest('a');
     if(!link || !link.hash) return;
-    elem = document.getElementById(`${link.hash.slice(1)}-repeat`);
+    let elem = document.getElementById(`${link.hash.slice(1)}-repeat`);
     if(elem) elem.remove();
     leave = true;
   });

@@ -110,3 +110,18 @@ Execute this after entering the directory
 ```shell
 export PATH="./bin:$PATH"
 ```
+
+or just use `./bin/runner`
+
+
+# Install plugin 
+
+Write a set of commands that automatically imports and uses the plugin from the github repository: 
+
+- [x] Create a default configuration file: Either a `*.rb` or a `*.yml` file.
+- [x] Read the configuration file 
+
+- Need to define ruby dependencies:
+    + `gem 'activesupport'`
+
+

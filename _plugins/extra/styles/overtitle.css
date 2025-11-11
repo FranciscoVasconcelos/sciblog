@@ -1,7 +1,7 @@
-
   pretty-box {
     display: block;
     margin: 10px 0;
+    font-style: italic;
   }
   pretty-box .box {
     border: 1px solid #ccc;
@@ -11,10 +11,15 @@
     position: relative;
   }
   pretty-box .header {
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    padding: 0 10px;
     font-size: 18px;
     font-weight: bold;
     margin-bottom: 10px;
-    border-bottom: 2px solid #333;
+    /* border-bottom: 2px solid #333; */
+    background-color: #f9f9f9;
   }
   pretty-box .content {
     margin-top: 10px;

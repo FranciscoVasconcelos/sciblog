@@ -1,5 +1,7 @@
 # encoding: utf-8
 require 'shellwords'
+require 'yaml'
+require 'active_support/core_ext/hash/deep_merge'
 
 def unique_acronym(strings)
   unique_strings = []
@@ -906,7 +908,7 @@ def generateVisualELement(context,type,filename,label,*args)
     page = context.registers[:page]
     content,anchor = generateEnvironmentContent(context,type,content=nil,label=label)
     original_path = page['path'].dup
-    original_path.sub!('_posts','_posts.msgpack')
+    original_path.sub!('_posts','_posts.data')
     parent = original_path.rpartition('/').first
     filepath = "/#{parent}/#{filename}"
 
@@ -1005,8 +1007,15 @@ def createEnvs(site,envs)
   end
 end
 
+def getDefaults()
+  YAML.load_file(File.expand_path("_default.yml", __dir__))
+end
+
 def addEnvs(site)
   raise "No environment defined" if !site.config["sciblog"] or !site.config["sciblog"]["envs"]
+  default = YAML.load_file(File.expand_path("_default.yml", __dir__))
+  site.config["sciblog"] = default["sciblog"].deep_merge(site.config["sciblog"])
+  # site.config["include"] = default["include"].concat(site.config["include"])
   createEnvs(site,site.config["sciblog"]["envs"])
 end
 

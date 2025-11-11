@@ -44,9 +44,6 @@ defaults:
 # The configuration for the sciblog plugin
 sciblog:
   envs:
-    theorem:
-      countby: section
-      proofname: proof
     lemma:
       countby: subsection
       proofname: proof
@@ -86,8 +83,9 @@ sciblog:
       display-mode: inline
       start-hidden: false
       style: blank
+
 include:
-  - "_posts.msgpack"
+  - "_posts.data"
 
 # Exclude from processing.
 # The following items will not be processed, by default.

@@ -89,7 +89,7 @@ This is a link with a popup attached: {% ref lemma:this:theorem popup=true %}
 {% repeat theo:this:theorem %}
 
 
-This → {% ref some-label popup=true %} is a link to a section on other page
+This → {% ref eq:section:this:is popup=true %} is a link to a section on other page
 
 
 {% includechart test.msgpack cols=2 %}
