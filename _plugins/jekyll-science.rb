@@ -1019,6 +1019,87 @@ def addEnvs(site)
   createEnvs(site,site.config["sciblog"]["envs"])
 end
 
+# Hook into Jekyll's post_write event (after site is built)
+Jekyll::Hooks.register :site, :post_write do |site|
+ 
+  # Get and parse the default.yml config file
+  config = getDefaults()
+  includes = config['include'] || []
+  
+  if includes.empty?
+    Jekyll.logger.info "SymlinkIncludes:", "No includes found in default.yml"
+    next
+  end
+  
+  # Determine environment
+  is_production = ENV['JEKYLL_ENV'] == 'production' || 
+                 ENV['CF_PAGES'] == '1' ||
+                 site.config['environment'] == 'production'
+  
+  if is_production
+    Jekyll.logger.info "SymlinkIncludes:", "Production mode - copying files"
+    create_static_files(site, includes)
+  else
+    Jekyll.logger.info "SymlinkIncludes:", "Development mode - creating symlinks"
+    create_symlinks(site, includes)
+  end
+end
+
+def create_symlinks(site, includes)
+  includes.each do |include_path|
+    source_path = File.join(site.source, include_path)
+    dest_path = File.join(site.dest, include_path)
+    
+    unless File.exist?(source_path)
+      Jekyll.logger.warn "SymlinkIncludes:", "Source not found: #{source_path}"
+      next
+    end
+    
+    # Create parent directory if needed
+    FileUtils.mkdir_p(File.dirname(dest_path))
+    
+    # Remove existing file/symlink if it exists
+    FileUtils.rm_rf(dest_path) if File.exist?(dest_path)
+    
+    # Create symlink
+    begin
+      FileUtils.ln_s(source_path, dest_path)
+      Jekyll.logger.info "SymlinkIncludes:", "Created symlink: #{include_path}"
+    rescue => e
+      Jekyll.logger.error "SymlinkIncludes:", "Failed to create symlink for #{include_path}: #{e.message}"
+    end
+  end
+end
+
+def create_static_files(site, includes)
+  includes.each do |include_path|
+    source_path = File.join(site.source, include_path)
+    dest_path = File.join(site.dest, include_path)
+    
+    unless File.exist?(source_path)
+      Jekyll.logger.warn "SymlinkIncludes:", "Source not found: #{source_path}"
+      next
+    end
+    
+    # Create parent directory if needed
+    FileUtils.mkdir_p(File.dirname(dest_path))
+    
+    # Copy file or directory
+    begin
+      if File.directory?(source_path)
+        # Copy entire directory
+        FileUtils.cp_r(source_path, File.dirname(dest_path))
+        Jekyll.logger.info "SymlinkIncludes:", "Copied directory: #{include_path}"
+      else
+        # Copy single file
+        FileUtils.cp(source_path, dest_path)
+        Jekyll.logger.info "SymlinkIncludes:", "Copied file: #{include_path}"
+      end
+    rescue => e
+      Jekyll.logger.error "SymlinkIncludes:", "Failed to copy #{include_path}: #{e.message}"
+    end
+  end
+end
 
 
 module ExtraPages

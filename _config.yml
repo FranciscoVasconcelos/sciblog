@@ -84,8 +84,7 @@ sciblog:
       start-hidden: false
       style: blank
 
-include:
-  - "_posts.data"
+
 
 # Exclude from processing.
 # The following items will not be processed, by default.

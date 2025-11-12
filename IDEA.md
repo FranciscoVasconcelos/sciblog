@@ -124,4 +124,10 @@ Write a set of commands that automatically imports and uses the plugin from the 
 - Need to define ruby dependencies:
     + `gem 'activesupport'`
 
+**Files for plugin**
+
+- `/bin/runner`
+- `/plugin/*`
+
+- [x] Script that copies all the content from the sciblob repo into some other `_plugin`'s project directory. 
 

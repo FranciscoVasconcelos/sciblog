@@ -22,7 +22,7 @@ The ability to write cross-referencing posts permits me to organise my notes eas
 - Adding tables and plots/charts from external files
     + **Table** `{% includetable some-table.msgpack %}`
     + **Chart** `{% includechart some-chart.msgpack %}`
-
+- Custom latex commands defined in `latex-commands.tex`
 
 **`Fetch.html`** 
 Has a sidebar with buttons to fetch certain elements by the names defined in the config file.
@@ -82,10 +82,14 @@ or
 - [ ] Enable rendering of any type of file 
 
 - [x] Error on **iframe** cannot find functions `RenderChart`, `RenderTable` and `RenderGraphic`
-- [ ] `_default.yml` cannot use `include` the overwrite does not adds the includes 
+- [x] `_default.yml` cannot use `include` the overwrite does not adds the includes 
+    + [x] Create symlink for local development
+    + [x] Copies the content for production (to work with Cloudflare)
+    + [x] Check what is the context
+        * Use environment variable and read it with `is_production = ENV['JEKYLL_ENV'] == 'production'`
+        * Cloudflare Pages sets environment variables during build:`is_cloudflare = ENV['CF_PAGES'] == '1'`
 
 - [ ] Fix or hide `Deprecation Warning [color-functions]: darken() is deprecated. Suggestions:`
-
 - [ ] Three.js does not render on popup (while tables do)
 
 ## 3D rendering and GUI
