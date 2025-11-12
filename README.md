@@ -74,6 +74,8 @@ or
     + [ ] The table is also not being rendered. 
     + [ ] Clicking a link to the own page refreshes it. And the ram gets more used by the webpage!
     + [ ] The website is eating much more ram making the computer slow. 
+    + [ ] Private content -- Enable login with password 
+    + [ ] `RenderGraphic` error/warning log when file does not exist!
 
 - [x] Rendering sections from iframes is ommiting text specifically `{% ref some-label popup=true %}` does not show 'of theorem'
 
