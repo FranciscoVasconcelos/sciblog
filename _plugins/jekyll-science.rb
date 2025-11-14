@@ -1012,9 +1012,10 @@ def getDefaults()
 end
 
 def addEnvs(site)
-  raise "No environment defined" if !site.config["sciblog"] or !site.config["sciblog"]["envs"]
+  # puts File.expand_path("_default.yml",__dir__)
   default = YAML.load_file(File.expand_path("_default.yml", __dir__))
-  site.config["sciblog"] = default["sciblog"].deep_merge(site.config["sciblog"])
+  site.config["sciblog"] = default["sciblog"].deep_merge(site.config["sciblog"] || {})
+  raise "No environment defined" if !site.config["sciblog"] or !site.config["sciblog"]["envs"]
   # site.config["include"] = default["include"].concat(site.config["include"])
   createEnvs(site,site.config["sciblog"]["envs"])
 end
@@ -1388,8 +1389,8 @@ def getContentExtra()
 end
 
 # Get the latex commands 
-def getLatexCommands()
-  dir = File.expand_path("../",__dir__)
+def getLatexCommands(site)
+  dir = site.source
   filename = File.join(dir,"latex-commands.tex")
   return "" if !File.file?(filename)
   commands = File.read(filename)
@@ -1414,8 +1415,10 @@ end
 Jekyll::Hooks.register :site, :post_render do |site|
   js_content  = appendPostsUrlVar(site,"repeat.js")
   extra_content = getContentExtra()
-  commands = getLatexCommands()
+  commands = getLatexCommands(site)
   ref = site.config['ref']
+  # puts "SITE:"
+  # puts site.source
 
   # Iterate over all posts
   site.posts.docs.each do |post|
