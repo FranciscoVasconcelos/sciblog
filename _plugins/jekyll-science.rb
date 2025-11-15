@@ -272,7 +272,7 @@ module Jekyll
       
       positional, named = parse_params(markup)
       
-      @header = named['header'] || positional[0]
+      @header = named['title'] || positional[0]
       type = named['by'] || positional[1]
       @level = (count_sub_prefixes(type) || named['level'] || 0).to_i
       @ref = named['label'] || positional[2] || ""
@@ -1301,7 +1301,7 @@ def setReference(post,ref)
       label = "#{ref[key]['label']}"
 
       # Return an anchor link
-      %(<a style="color:blue; text-decoration:none" href="#{equrl}"#{extra}>#{label}</a>) 
+      %(<a style="color:blue; text-decoration:none" href="#{equrl}"#{extra}>#{label}</a>)
     else
       raise "Key #{key} does not exist"
     end
