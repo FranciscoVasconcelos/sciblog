@@ -932,6 +932,8 @@ function RenderGraphic(plyPath,containerId) {
 }
 
 // Make the functions available everywhere
+
+window.toggleContent = toggleContent;
 window.RenderTable = RenderTable;
 window.RenderChart = RenderChart;
 window.RenderGraphic = RenderGraphic;

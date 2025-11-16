@@ -9,9 +9,6 @@ sciblog:
       countby: subsection
       proofname: proof
       side-content: false
-      display-mode: overlay
-      start-hidden: true
-      style: dark
     exercise:
       countby: section
       proofname: solution

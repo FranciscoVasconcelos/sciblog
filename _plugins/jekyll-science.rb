@@ -329,7 +329,7 @@ module Jekyll
     def render(context)
       className = ''
       className = " class='popup'" if @popup
-      <<~HTML
+      <<~HTML.chomp
       <mathlabel#{className}>math-ref-#{@label}</mathlabel>
       HTML
 
@@ -433,6 +433,20 @@ module Jekyll
 
     end
   end
+
+  class QED < Liquid::Tag
+    def initialize(tag_name, markup, tokens)
+      super
+    end
+    def render(context)
+      <<~HTML 
+        <p style="text-align: right;">□</p>
+      HTML
+      
+    end
+  end
+
+
 end
 
 module Jekyll
@@ -561,9 +575,9 @@ module Jekyll
       content = super
       
       <<~HTML
-        <div class="equation-group">
+        <div class="equation-group"  id="#{anchor}">
         <div class="single-equation">
-            <div class="math" id="#{anchor}">
+            <div class="math">
                 $$#{content}\\notag$$
             </div>
             <div class='ocupa'></div>
@@ -812,7 +826,7 @@ def generateEnvironmentContent(context,envname,content=nil,label=nil,display_mod
     proofname = site.config[envname]['proofname']
     linkproof = 
     <<~HTML
-      See <prooflabel>#{anchor}:proof</prooflabel>
+      <p>See <prooflabel>#{anchor}:proof</prooflabel></p>
     HTML
   end
 
@@ -934,6 +948,7 @@ Liquid::Template.register_tag('subequations',Jekyll::Subequations)
 Liquid::Template.register_tag('section',Jekyll::Sectioning)
 Liquid::Template.register_tag('ref',Jekyll::Reference)
 Liquid::Template.register_tag('envproof', Jekyll::EnvProof)
+Liquid::Template.register_tag('QED', Jekyll::QED)
 Liquid::Template.register_tag('equation', Jekyll::EquationLabel)
 Liquid::Template.register_tag('gridequations', Jekyll::GridEquations)
 Liquid::Template.register_tag('repeat', Jekyll::Repeat)
