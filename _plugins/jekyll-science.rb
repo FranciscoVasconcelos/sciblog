@@ -239,8 +239,6 @@ module Jekyll
       @proof = (named['showproof'] || positional[1]) == 'true' 
       @display_mode = named['display_mode'] || positional[2]
       @title = named['title'] || positional[3]
-
-
     end
     def render(context)
       site = context.registers[:site]
