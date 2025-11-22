@@ -2,6 +2,7 @@
 require 'shellwords'
 require 'yaml'
 require 'active_support/core_ext/hash/deep_merge'
+require 'find'
 
 def unique_acronym(strings)
   unique_strings = []
@@ -1506,4 +1507,16 @@ module Jekyll
       result
     end
   end
+end
+
+
+# Exclude code folders
+Jekyll::Hooks.register :site, :after_init do |site|
+  code_dirs = Dir.glob("**/code", File::FNM_DOTMATCH).select { |path| File.directory?(path) }
+  
+  puts "Excluding code directories:"
+  code_dirs.each { |dir| puts "  - #{dir}" }
+  
+  site.config['exclude'] ||= []
+  site.config['exclude'].concat(code_dirs)
 end
